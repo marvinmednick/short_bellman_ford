@@ -5,10 +5,16 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::collections::{HashMap,BTreeMap};
 use std::thread;
+use log::{ info, /*error, */ debug, /*warn,*/ trace };
 
+mod dirgraph;
+use crate::dirgraph::DirectedGraph;
 
 
 fn main() {
+
+    env_logger::init();
+    info!("Logging started");
 
 
     let args: Vec<String> = env::args().collect();
@@ -29,7 +35,7 @@ fn main() {
 
     let reader = BufReader::new(file);
 
-	let mut g = Graph::new();
+	let mut g = DirectedGraph::new();
 
 	let mut _count = 0;
     for line in reader.lines() {
@@ -45,7 +51,7 @@ fn main() {
 		for other_v in &adjacent {
 
 			other = other_v.clone();
-			let _num_edges = g.add_edge(vertex,*other_v);
+			let _num_edges = g.add_edge(vertex,*other_v,1);
 		
 		}
 		if _count % 100000 == 0 {
@@ -98,8 +104,8 @@ fn main() {
 mod tests {
     use super::*;
 
-	fn setup_basic1() -> Graph {
-		let mut g = Graph::new();
+	fn setup_basic1() -> DirectedGraph {
+		let mut g = DirectedGraph::new();
 		assert_eq!(g.add_edge(1,2),Some(1));
 		assert_eq!(g.add_edge(1,3),Some(2));
 		assert_eq!(g.add_edge(2,3),Some(1));
@@ -114,7 +120,7 @@ mod tests {
 
     #[test]
     fn basic() {
-		let mut g = Graph::new();
+		let mut g = DirectedGraph::new();
 		assert_eq!(g.create_vertex(&1),Some(1));
 		assert_eq!(g.create_vertex(&2),Some(2));
 		assert_eq!(g.add_edge(1,2),Some(1));
@@ -131,7 +137,7 @@ mod tests {
 
 	#[test]
 	fn test_add() {
-		let mut g = Graph::new();
+		let mut g = DirectedGraph::new();
 		assert_eq!(g.add_edge(1,2),Some(1));
 		assert_eq!(g.get_outgoing(1),&[2]);
 		assert_eq!(g.get_incoming(2),&[1]);
