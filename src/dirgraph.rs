@@ -2,19 +2,20 @@
 //use std::process; use std::io::{self, Write}; // use std::error::Error;
 //use std::cmp;
 use std::collections::{BTreeMap, BTreeSet};
-use log::{ info, error, debug, /*warn,*/ trace };
+use log::{ /* info */ error, debug, /*warn, trace */ };
 
 
-struct Edge {
+#[derive(Debug,Clone)]
+pub struct Edge {
     edge_id: u32,
     source:  u32,
     dest:    u32,
-    weight:  i32,
+    weight:  i64,
 }
 
 impl Edge {
 
-    pub fn new(new_edge_id: u32, source_vertex_id: u32, dest_vertex_id: u32, weight: i32 ) -> Edge {
+    pub fn new(new_edge_id: u32, source_vertex_id: u32, dest_vertex_id: u32, weight: i64 ) -> Edge {
         Edge {
             edge_id:    new_edge_id,
             source:     source_vertex_id,
@@ -22,12 +23,24 @@ impl Edge {
             weight:     weight,
         }
     }
+
+    pub fn source(&self) -> u32 {
+        self.source
+    }
+
+    pub fn dest(&self) -> u32 {
+        self.dest
+    }
+
+    pub fn weight(&self) -> i64 {
+        self.weight
+    }
 }
 
 
 
 #[derive(Debug, Clone)]
-struct Vertex {
+pub struct Vertex {
 	vertex_id: u32,
     // set of incomin and outgoing edge ids
 	incoming: BTreeSet<u32>,
@@ -113,7 +126,7 @@ impl DirectedGraph {
 		}
     }
 
-	pub fn define_edge(&mut self, source: u32, dest: u32, weight: i32 ) {
+	pub fn define_edge(&mut self, source: u32, dest: u32, weight: i64 ) {
         if source != 0 && dest != 0 {
             //TODO : ;may need clone for next_edge_id since its beeing used 2x
 			let e = Edge::new(self.next_edge_id.clone(), source, dest, weight);
@@ -122,7 +135,7 @@ impl DirectedGraph {
         }
 	}
 
-	pub fn add_edge(&mut self, v1: u32, v2: u32, weight: i32) {
+	pub fn add_edge(&mut self, v1: u32, v2: u32, weight: i64) {
 
 		//create the vertexes, if the don't exist
 		self.define_vertex(v1.clone());
@@ -142,25 +155,29 @@ impl DirectedGraph {
 	}
 
 
-	pub fn get_outgoing_vertex(&self, vertex: u32) -> Vec<u32>{
+	pub fn get_outgoing_vertex(&self, vertex: u32) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
         // by mapping each id to its dest element
         // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
         // returns 'None' ; this shouldn't occur, and will crash here if it did
-		v.get_outgoing_edges().iter().map(|x| self.edge_map.get(&x).unwrap().dest).collect()
+		v.get_outgoing_edges().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
 		
 	}
 
-	pub fn get_incoming_vertex(&self, vertex: u32) -> Vec<u32>{
+	pub fn get_incoming_vertex(&self, vertex: u32) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
         // by mapping each id to its dest element
         // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
         // returns 'None' ; this shouldn't occur, and will crash here if it did
-		v.get_incoming_edges().iter().map(|x| self.edge_map.get(&x).unwrap().source).collect()
+		v.get_incoming_edges().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
 		
 	}
+
+    pub fn vertex_iter(&self) -> std::collections::btree_map::Iter<'_, u32, Vertex> {
+        self.vertex_map.iter()
+    }
 
 	pub fn get_vertexes(&self) -> Vec<u32> {
 		self.vertex_map.keys().cloned().collect()

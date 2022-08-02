@@ -1,94 +1,54 @@
-use std::env; use std::process; use std::io::{self, Write}; // use std::error::Error;
-//use std::cmp;
 use std::path::Path;
 use std::fs::File;
-use std::io::{prelude::*, BufReader};
-use std::collections::{HashMap,BTreeMap};
-use std::thread;
+use std::io::{BufReader,BufRead};
+use regex::Regex;
 use log::{ info, /*error, */ debug, /*warn,*/ trace };
+
+
+mod cmd_line;
+use crate::cmd_line::CommandArgs;
 
 mod dirgraph;
 use crate::dirgraph::DirectedGraph;
 
+mod dijkstra;
+use crate::dijkstra::Dijkstra;
+
+mod parse;
+use crate::parse::read_adjancency_with_weight;
 
 fn main() {
 
     env_logger::init();
-    info!("Logging started");
 
+    let cmd_line = CommandArgs::new();
 
-    let args: Vec<String> = env::args().collect();
+    debug!("The Command Line, {:?}!",cmd_line);
 
-	println!("Args {:?} {}",args,args.len());
-
-	if args.len() < 2 { eprintln!("Usage: {} filename <count>", args[0]); process::exit(1); }
-
-  // Create a path to the desired file
-    let path = Path::new(&args[1]);
+    // Create a path to the desired file
+    let path = Path::new(&cmd_line.filename);
     let display = path.display();
 
+
     // Open the path in read-only mode, returns `io::Result<File>`
-    let file = match File::open(&path) {
+    let mut file = match File::open(&path) {
         Err(why) => panic!("couldn't open {}: {}", display, why),
         Ok(file) => file,
     };
 
-    let reader = BufReader::new(file);
 
 	let mut g = DirectedGraph::new();
 
-	let mut _count = 0;
-    for line in reader.lines() {
-		_count += 1;	
-		let line_data = line.unwrap();
-		let mut tokens = line_data.split_whitespace();
-		let vertex = tokens.next().unwrap().parse::<u32>().unwrap();
-		let adjacent : Vec<u32> = tokens.map(|x| x.to_string().parse::<u32>().unwrap()).collect();
-		
+    let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
 
-		let mut other : u32 = 0;
-//		g.create_vertex(&vertex);
-		for other_v in &adjacent {
+    read_adjancency_with_weight(&mut file, add_edge_fn);
 
-			other = other_v.clone();
-			let _num_edges = g.add_edge(vertex,*other_v,1);
-		
-		}
-		if _count % 100000 == 0 {
-			println!(" {} : {}  from {}  to {}" ,_count,line_data,vertex,other);
-			io::stdout().flush().unwrap();
-		}
-		if _count % 10000 == 0 {
-			print!(".");
-			io::stdout().flush().unwrap();
-		} 
+    let mut d = Dijkstra::new();
+
+    for (id, v) in g.vertex_iter() {
+        d.initialize_vertex(id.clone());
     }
-	let child = thread::Builder::new().stack_size(512 * 1024 * 1024).spawn(move || { 
-	   // code to be executed in thread
 
-		println!("Read {} lines",_count);
-	//	g.print_vertexes();
-	//	g.dfs_incoming(1,1,0);
-	//	println!("Finish Order {:?}", g.finished_order);
-	//	println!("Starting Vertex {:?}", g.start_search);
-		g.finished_order = Vec::<u32>::new();
-		g.start_search = HashMap::<u32,Vec::<u32>>::new();
-		g.explored = HashMap::<u32,bool>::new();
-		let list : Vec<u32> = g.vertex_map.keys().cloned().collect();
-		g.dfs_loop_incoming(&list);
-	//	println!("Finish Order {:?}", g.finished_order);
-	//	println!("Starting Vertex {:?}", g.start_search);
-		let list : Vec<u32> = g.finished_order.iter().rev().cloned().collect();
-		g.dfs_loop_outgoing(&list);
-		println!("\n Start search has {} entries",g.start_search.len());
-		// println!("\n Start search {:?} entries",g.start_search);
-		println!("\n Top Counts {:?} entries",g.top_search_cnts);
-		let mut top_search_count_vec : Vec::<(u32, usize)> = g.top_search_cnts.iter().map(|(k,v)| (*k, *v)).collect();
-		top_search_count_vec.sort_by(|a, b| b.1.cmp(&a.1));
-		println!("\n Top Counts {:?} entries",top_search_count_vec);
-	}).unwrap(); 
-	child.join().unwrap();
-//	println!("Starting Vertex {:?}", g.start_search);
 }
 
 
