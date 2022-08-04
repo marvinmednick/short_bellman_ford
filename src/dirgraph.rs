@@ -2,7 +2,7 @@
 //use std::process; use std::io::{self, Write}; // use std::error::Error;
 //use std::cmp;
 use std::collections::{BTreeMap, BTreeSet};
-use log::{ /* info */ error, debug, /*warn, trace */ };
+use log::{ /* info */ error, /* debug,*/ /*warn,*/ /* trace */ };
 
 
 #[derive(Debug,Clone)]

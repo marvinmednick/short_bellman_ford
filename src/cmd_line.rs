@@ -1,6 +1,8 @@
-extern crate clap; use log::{ info , error /* ,debug, warn,trace */ };
+extern crate clap;
+//use log::{ info , error /* ,debug, warn,trace */ };
 
-use clap::{Arg, Command,arg};
+//use clap::{Arg, Command,arg, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 #[derive(Debug)]
 pub enum InputFileFormat {
@@ -8,6 +10,37 @@ pub enum InputFileFormat {
     AdjacentMultiEntryPerLine,
 }
 
+#[derive(Parser, Debug)]
+#[clap(name = "short")]
+#[clap(author = "Marvin Mednick")]
+#[clap(version = "1.0")]
+#[clap(about = "Various Shortest path utilities ", long_about = "Supports Dijkstra and will support bellman-ford and others.. ")]
+pub struct CommandArgs  {
+    #[clap(value_parser)]
+    pub filename: String,
+    //pub input_format: InputFileFormat,
+
+    #[clap(subcommand)]
+    pub command: Option<Commands>,
+}
+
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// does testing things
+    Test {
+        /// lists test values
+        #[clap(short, long, action)]
+        list: bool,
+    },
+    /// Executes Dijkstra shortest path on graph
+    Dijkstra {
+        #[clap(value_parser)]
+        start: u32,
+    }
+}
+
+/*
 #[derive(Debug)]
 pub struct CommandArgs  {
     pub filename: String,
@@ -85,3 +118,4 @@ impl CommandArgs  {
         }
     }   
 }
+*/

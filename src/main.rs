@@ -1,12 +1,14 @@
 use std::path::Path;
 use std::fs::File;
-use std::io::{BufReader,BufRead};
-use regex::Regex;
-use log::{ info, /*error, */ debug, /*warn,*/ trace };
+use log::{ /* info, error, */ debug, /*warn, trace */};
+
+use clap::Parser;
+
 
 
 mod cmd_line;
 use crate::cmd_line::CommandArgs;
+use crate::cmd_line::Commands;
 
 mod dirgraph;
 use crate::dirgraph::DirectedGraph;
@@ -15,13 +17,13 @@ mod dijkstra;
 use crate::dijkstra::Dijkstra;
 
 mod parse;
-use crate::parse::read_adjancency_directed_with_weight;
+use crate::parse::read_adjacency_multi;
 
 fn main() {
 
     env_logger::init();
 
-    let cmd_line = CommandArgs::new();
+    let cmd_line = CommandArgs::parse();
 
     debug!("The Command Line, {:?}!",cmd_line);
 
@@ -41,23 +43,32 @@ fn main() {
 
     let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
 
-    read_adjancency_directed_with_weight(&mut file, add_edge_fn);
+    read_adjacency_multi(&mut file, add_edge_fn);
 
 
-    if cmd_line.dijkstra {
+    match &cmd_line.command {
 
-        let mut d = Dijkstra::new();
+        Some(Commands::Dijkstra { start }) => {
+            let mut d = Dijkstra::new();
 
-        for (id, v) in g.vertex_iter() {
-            d.initialize_vertex(id.clone());
-        }
-        d.shortest_paths(&g, cmd_line.dijkstra_start);
+            for (id, v) in g.vertex_iter() {
+                d.initialize_vertex(id.clone());
+            }
+            d.shortest_paths(&g, *start);
 
-        for (vertex_id, _)  in g.vertex_iter() {
-            println!("v {} - {}", vertex_id, d.get_processed(vertex_id));
-        }
+            for (vertex_id, _)  in g.vertex_iter() {
+                println!("v {} - {}", vertex_id, d.get_processed(vertex_id));
+            }
+        },
+        Some(Commands::Test {..}) => {
+            todo!();
+        },
+        None => {
+            println!("No command given")
+
+        },
+
     }
-
 }
 
 

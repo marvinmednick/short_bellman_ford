@@ -25,7 +25,7 @@ impl Dijkstra {
     }
 
     pub fn initialize_vertex(&mut self, vertex_id: u32) {
-        self.unprocessed_vertex.insert(vertex_id,i64::MAX);
+        self.unprocessed_vertex.insert(vertex_id,100000000);
     }
         
 
