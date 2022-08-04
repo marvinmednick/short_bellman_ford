@@ -1,9 +1,10 @@
-//use std::env; 
 //use std::process; use std::io::{self, Write}; // use std::error::Error;
 //use std::cmp;
 use std::collections::{BTreeMap, BTreeSet};
-use log::{ /* info */ error, /* debug,*/ /*warn,*/ /* trace */ };
+use log::{ /* info */ error, /* debug,*/ warn, trace };
 
+use std::fmt::Display; 
+use std::fmt;
 
 #[derive(Debug,Clone)]
 pub struct Edge {
@@ -13,9 +14,18 @@ pub struct Edge {
     weight:  i64,
 }
 
+impl Display for Edge {
+
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: ({} -> {} w{})", self.edge_id, self.source, self.dest, self.weight)
+    }
+
+}
+
 impl Edge {
 
     pub fn new(new_edge_id: u32, source_vertex_id: u32, dest_vertex_id: u32, weight: i64 ) -> Edge {
+        trace!("New Edge {} from {} to {} with weight {}",new_edge_id,source_vertex_id,dest_vertex_id,weight);
         Edge {
             edge_id:    new_edge_id,
             source:     source_vertex_id,
@@ -23,6 +33,7 @@ impl Edge {
             weight:     weight,
         }
     }
+
 
     pub fn source(&self) -> u32 {
         self.source
@@ -57,10 +68,16 @@ impl Vertex {
 				outgoing: outgoing,
 				}
 	}
+
+    
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Vertex {}", self.vertex_id)
+    }
 	
 	pub fn add_outgoing(&mut self, edge_id: u32) {
+        trace!("Adding outgoing edge {} to vertex {}",edge_id, self.vertex_id);
         if !self.outgoing.insert(edge_id) {
-           error!("add_outgoing: Vertex {} - outgoing edge {} already exists",self.vertex_id,edge_id)
+           error!("add_outgoing: Vertex {} - outgoing edge {} already exists",edge_id, self.vertex_id)
         }
 	}
 
@@ -71,6 +88,7 @@ impl Vertex {
 	}
 
 	pub fn add_incoming(&mut self, edge_id: u32) {
+        trace!("Adding incoming edge {} to vertex {}",edge_id,self.vertex_id);
         if !self.incoming.insert(edge_id) {
            error!("add_incoming: Vertex {} - outgoing edge {} already exists",self.vertex_id,edge_id)
         }
@@ -124,18 +142,24 @@ impl DirectedGraph {
 			None
 		} 
 		else { 
+            trace!("Adding Vertex {}",id);
 			let v = Vertex::new(id.clone());
 			self.vertex_map.insert(id,v);
 			Some(self.vertex_map.len())  
 		}
     }
 
-	pub fn define_edge(&mut self, source: u32, dest: u32, weight: i64 ) {
+	pub fn define_edge(&mut self, source: u32, dest: u32, weight: i64 ) -> Option<u32> {
         if source != 0 && dest != 0 {
-            //TODO : ;may need clone for next_edge_id since its beeing used 2x
-			let e = Edge::new(self.next_edge_id.clone(), source, dest, weight);
-			self.edge_map.insert(self.next_edge_id.clone(),e);
+            let edge_id = self.next_edge_id.clone();
             self.next_edge_id += 1;
+			let e = Edge::new(edge_id, source, dest, weight);
+			self.edge_map.insert(edge_id,e);
+            Some(edge_id)
+        }
+        else {
+            warn!("Invalid edge input 0  source {} dest {} weight {}", source, dest, weight);
+            None
         }
 	}
 
@@ -144,17 +168,20 @@ impl DirectedGraph {
 		//create the vertexes, if the don't exist
 		self.define_vertex(v1.clone());
 		self.define_vertex(v2.clone());
-        self.define_edge(v1.clone(),v2.clone(),weight);
+        if let Some (edge_id) = self.define_edge(v1.clone(),v2.clone(),weight) {
+            let v_map = &mut self.vertex_map;
 
-		let v_map = &mut self.vertex_map;
-        //
-		// add the edge to the first vertex's adjanceny list
-		let vert1 = v_map.get_mut(&v1).unwrap(); 
-		vert1.add_outgoing(v2);
+            // add the edge to the first vertex's adjacency outgoing list
+            let vert1 = v_map.get_mut(&v1).unwrap();
+            vert1.add_outgoing(edge_id);
 
-		// add the edge to the second vertex adjacentcy list
-		let vert2 = v_map.get_mut(&v2).unwrap(); 
-		vert2.add_incoming(v1);
+            // add the edge to the second vertex adjacency incoming list
+            let vert2 = v_map.get_mut(&v2).unwrap();
+            vert2.add_incoming(edge_id);
+        }
+        else {
+            error!("Error adding Edge  v1 {} v2 {} w {}",v1,v2,weight);
+        }
 
 	}
 
@@ -188,10 +215,21 @@ impl DirectedGraph {
 	}
 
 	pub fn print_vertexes(&self) {
+        println!("Vertexes:");
 		for (key, value) in &self.vertex_map {
-			let out_list : String = value.outgoing.iter().map(|x| {let e = self.edge_map.get(x).unwrap(); format!("{}({}) ; ",e.dest,e.weight) }).collect();
-			println!("Vertex {} ({}) :  {}",key,value.vertex_id,out_list);
+//			let out_list : String = value.outgoing.iter().map(|x| {let e = self.edge_map.get(x).unwrap(); format!("e{} v{}(w{}) ; ",x,e.dest,e.weight) }).collect();
+			let out_list : String = value.outgoing.iter().map(|x| {let e = 
+                    self.edge_map.get(x)
+                        .unwrap_or(&Edge { edge_id: 0,source: 0, dest: 0, weight: 0 }); format!("{} ; ",e) })
+                        .collect();
+			println!("Vertex {} ({}) :  outgoing list: {}",key,value.vertex_id,out_list);
 		}
+        println!("Edges");
+        for (key, value) in &self.edge_map {
+            println!("Edge id {}   {:?}", key, value);
+        }
+
+
 					
 	}
 

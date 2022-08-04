@@ -44,6 +44,7 @@ fn main() {
     let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
 
     read_adjacency_multi(&mut file, add_edge_fn);
+    //g.print_vertexes();
 
 
     match &cmd_line.command {
@@ -64,6 +65,9 @@ fn main() {
         },
         Some(Commands::Test {..}) => {
             todo!();
+        },
+        Some(Commands::Print {..}) => {
+            println!("Printing Graphs...");
         },
         None => {
             println!("No command given")

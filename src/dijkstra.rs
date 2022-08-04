@@ -57,7 +57,7 @@ impl Dijkstra {
     // Update scoring in the unprocessed pool of vertexes related to 
     // vertex of id.
     fn update_scoring(&mut self, graph: &DirectedGraph, cur_vertex: u32) {
-        trace!("Dijsktra scoring for vertex {}",cur_vertex);
+        debug!("Dijsktra scoring for vertex {}",cur_vertex);
 
         // get the list of vertexes which are reachable (outgoing) from the current vertex
         let adj_edges = graph.get_outgoing_vertex(cur_vertex);
@@ -68,7 +68,7 @@ impl Dijkstra {
         // update each of this nodes adjancent vertexes, if the new distance
         // is < the current distance
         for e in adj_edges {
-            trace!("Dijsktra updating adjacent {:?}",e);
+            debug!("Dijsktra updating adjacent {:?}",e);
             // if the adjacent vertex is still in the unprocessed list, then 
             // update the scoring, otherwise skip it (since its already in the processed list)
             if let Some(cur_score) = self.unprocessed_vertex.peek_id_data(e.dest()) {
