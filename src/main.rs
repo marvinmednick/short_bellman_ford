@@ -15,7 +15,7 @@ mod dijkstra;
 use crate::dijkstra::Dijkstra;
 
 mod parse;
-use crate::parse::read_adjancency_with_weight;
+use crate::parse::read_adjancency_directed_with_weight;
 
 fn main() {
 
@@ -41,12 +41,21 @@ fn main() {
 
     let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
 
-    read_adjancency_with_weight(&mut file, add_edge_fn);
+    read_adjancency_directed_with_weight(&mut file, add_edge_fn);
 
-    let mut d = Dijkstra::new();
 
-    for (id, v) in g.vertex_iter() {
-        d.initialize_vertex(id.clone());
+    if cmd_line.dijkstra {
+
+        let mut d = Dijkstra::new();
+
+        for (id, v) in g.vertex_iter() {
+            d.initialize_vertex(id.clone());
+        }
+        d.shortest_paths(&g, cmd_line.dijkstra_start);
+
+        for (vertex_id, _)  in g.vertex_iter() {
+            println!("v {} - {}", vertex_id, d.get_processed(vertex_id));
+        }
     }
 
 }

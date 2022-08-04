@@ -92,6 +92,10 @@ impl Vertex {
         // get the list of outgoing edges and map them to the dest vertex
 		self.incoming.iter().cloned().collect()
     }
+
+    pub fn id(&self) -> u32 {
+        self.vertex_id
+    }
 }
 
 

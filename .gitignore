@@ -17,3 +17,7 @@ bf
 
 # files for saving output for review
 output*
+
+# links to test cases
+*tcs
+

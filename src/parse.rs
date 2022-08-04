@@ -4,7 +4,7 @@ use regex::Regex;
 use log::{ info, /*error, */ debug, /*warn,*/ trace };
 
 
-pub fn read_adjancency_with_weight<F: FnMut(u32,u32,i64)>
+pub fn read_adjancency_directed_with_weight<F: FnMut(u32,u32,i64)>
     ( file: & mut File, mut add_edge: F ) {
 
     //open the file
@@ -39,4 +39,44 @@ pub fn read_adjancency_with_weight<F: FnMut(u32,u32,i64)>
         add_edge(source,dest, weight);
     }
 
+}
+
+
+// 
+// Format is 1 line per vertex with a tuple consistenting of destination vertex and weight
+// e.g.    
+// 1   2,8   3,6
+// 2   1,8  3, 4
+// 3   1,6, 2, 4
+pub fn read_adjacency_undirected_with_weight<F: FnMut(u32,u32,i64)>
+    ( file: & mut File, mut add_edge: F ) {
+
+    //open the file
+    let mut reader = BufReader::new(file);
+
+	let mut _count = 0;
+    for line in reader.lines() {
+		_count += 1;	
+		let line_data = line.unwrap();
+
+        // split the line into the vertex and the list of adjacent vertexes/weight pairs
+        let re_vertex = Regex::new(r"\s*(?P<vertex>\d+)\s+(?P<adjacent_list>.*$)").unwrap();
+        // adjacent vertexes are in the format vertex,weight   - and regex below allows for
+        // whitespace
+        let caps = re_vertex.captures(&line_data).unwrap();
+        let text1 = caps.get(1).map_or("", |m| m.as_str());
+        let vertex = text1.parse::<u32>().unwrap();
+
+        let re_adjacent = Regex::new(r"\s*(?P<vertex>\d+)\s*,\s*(?P<weight>\d*)").unwrap();
+        let text2 = caps.get(2).map_or("", |m| m.as_str());
+
+        let mut count =0;
+        for caps in re_adjacent.captures_iter(text2) {
+            let dest_vertex = caps["vertex"].parse::<u32>().unwrap(); 
+            let weight = caps["weight"].parse::<i64>().unwrap(); 
+			let _num_edges = add_edge(vertex,dest_vertex,weight);
+            count += 1;
+
+        }
+    }
 }

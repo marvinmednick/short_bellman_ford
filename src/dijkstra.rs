@@ -86,4 +86,8 @@ impl Dijkstra {
         }
 
     }
+
+    pub fn get_processed(&self,index : &u32) -> i64 {
+        self.processed_vertex[index]
+    }
 }
