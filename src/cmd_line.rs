@@ -37,6 +37,9 @@ pub enum Commands {
     Dijkstra {
         #[clap(value_parser)]
         start: u32,
+        #[clap(short, long, value_parser, use_value_delimiter=true)]
+        /// list of vertexes to display
+        display_list: Option<Vec<u32>>,
     }
 }
 

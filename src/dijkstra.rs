@@ -1,5 +1,5 @@
 extern crate minheap;
-use std::collections::HashMap;
+use std::collections::{HashMap,BTreeMap};
 use minheap::MinHeap;
 
 use crate::dirgraph::DirectedGraph;
@@ -9,7 +9,7 @@ use log::{ info, error, debug, /*warn,*/ trace };
 pub struct Dijkstra {
         explored:  HashMap::<u32,bool>,
         unprocessed_vertex : MinHeap::<i64>,
-        processed_vertex : HashMap::<u32,i64>,
+        processed_vertex : BTreeMap::<u32,i64>,
 }
 
 
@@ -19,7 +19,7 @@ impl Dijkstra {
         Dijkstra { 
             explored:  HashMap::<u32,bool>::new(),
             unprocessed_vertex : MinHeap::<i64>::new(),
-            processed_vertex : HashMap::<u32,i64>::new(),
+            processed_vertex : BTreeMap::<u32,i64>::new(),
         }
 
     }
@@ -90,4 +90,40 @@ impl Dijkstra {
     pub fn get_processed(&self,index : &u32) -> i64 {
         self.processed_vertex[index]
     }
+
+
+    pub fn print_result(&self, display_list: Vec<u32>, short_display: bool) {
+        if display_list.len() > 0 {
+            for v in display_list {
+                if self.processed_vertex.contains_key(&v) {
+                    Dijkstra::print_vertex_result(v, self.get_processed(&v),short_display);
+                }
+                else {
+                    error!("Dest Vertex {} is invalid",v);
+                }
+            }
+            println!();
+
+        }
+        else {
+            for (v, result) in self.processed_vertex.iter() {
+                Dijkstra::print_vertex_result(*v, *result,short_display);
+            }
+            println!();
+        }
+
+    }
+
+    fn print_vertex_result(vertex: u32, result: i64, short: bool) {
+
+        if short {
+            print!("{} ", result);
+        }
+        else {
+            println!("v {} - {}", vertex, result);
+        }
+
+    }
+
+
 }

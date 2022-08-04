@@ -48,17 +48,19 @@ fn main() {
 
     match &cmd_line.command {
 
-        Some(Commands::Dijkstra { start }) => {
+        Some(Commands::Dijkstra { start, display_list }) => {
             let mut d = Dijkstra::new();
 
             for (id, v) in g.vertex_iter() {
                 d.initialize_vertex(id.clone());
             }
             d.shortest_paths(&g, *start);
+            let list = match display_list {
+                None => vec!(),
+                Some(x) => x.clone(),
+            };
+            d.print_result(list,true);
 
-            for (vertex_id, _)  in g.vertex_iter() {
-                println!("v {} - {}", vertex_id, d.get_processed(vertex_id));
-            }
         },
         Some(Commands::Test {..}) => {
             todo!();
