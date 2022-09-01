@@ -16,12 +16,14 @@ pub enum InputFileFormat {
 #[clap(version = "1.0")]
 #[clap(about = "Various Shortest path utilities ", long_about = "Supports Dijkstra and will support bellman-ford and others.. ")]
 pub struct CommandArgs  {
-    #[clap(value_parser)]
-    pub filename: String,
-    //pub input_format: InputFileFormat,
 
-    #[clap(subcommand)]
-    pub command: Option<Commands>,
+   #[clap(value_parser)]
+   pub filename: String,
+
+   #[clap(subcommand)]
+   pub command: Option<Commands>,
+    
+    //pub input_format: InputFileFormat,
 }
 
 
@@ -37,6 +39,7 @@ pub enum Commands {
     Dijkstra {
         #[clap(value_parser)]
         start: u32,
+
         #[clap(short, long, value_parser, use_value_delimiter=true)]
         /// list of vertexes to display
         display_list: Option<Vec<u32>>,

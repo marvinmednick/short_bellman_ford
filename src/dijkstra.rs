@@ -93,8 +93,10 @@ impl Dijkstra {
 
 
     pub fn print_result(&self, display_list: Vec<u32>, short_display: bool) {
+        let mut is_first = true;
         if display_list.len() > 0 {
             for v in display_list {
+                if is_first { is_first = false; } else { print!(","); }
                 if self.processed_vertex.contains_key(&v) {
                     Dijkstra::print_vertex_result(v, self.get_processed(&v),short_display);
                 }
@@ -117,7 +119,7 @@ impl Dijkstra {
     fn print_vertex_result(vertex: u32, result: i64, short: bool) {
 
         if short {
-            print!("{} ", result);
+            print!("{}", result);
         }
         else {
             println!("v {} - {}", vertex, result);
