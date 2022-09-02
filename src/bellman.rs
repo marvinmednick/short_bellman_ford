@@ -6,8 +6,34 @@ use crate::dirgraph::DirectedGraph;
 
 use log::{ info, error, debug, /*warn,*/ trace };
 
+use std::fmt;
+use crate::bellman::MinMax::Value;
+
+#[derive(Debug,Clone,Copy,PartialOrd,Ord,PartialEq,Eq)]
+pub enum MinMax<T> {
+    Min,
+    Value(T),
+    Max,
+    NA,
+}
+
+// Implement `Display` for `MinMax`.
+impl<T: fmt::Display> fmt::Display for MinMax<T>
+
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            MinMax::Min => f.pad(&format!("Min")),
+            MinMax::Max => f.pad(&format!("Max")),
+            MinMax::NA =>  f.pad(&format!("NA")),
+            MinMax::Value(ref x) =>  f.pad(&format!("{}", x))
+        }
+    }
+}
+
+
 pub struct Bellman {
-        distances:  TwoDArray<i64>,
+        distances:  TwoDArray<MinMax<i64>>,
         num_vertex: usize,
         iterations: usize,
 }
@@ -20,7 +46,7 @@ impl Bellman {
         let height = num_vertex;
 
         Bellman { 
-            distances:  TwoDArray::<i64>::new(width,height),
+            distances:  TwoDArray::<MinMax<i64>>::new(width,height,MinMax::Max),
             num_vertex: width,
             iterations: height,
         }
@@ -33,51 +59,69 @@ impl Bellman {
 
         // initialite the first iteration with the distance from the starting
         // vertex to itself as 0 -- all other items will be left at none
-        self.distances.set(starting_vertex,0,0);
+        self.distances.set(starting_vertex,0,MinMax::Value(0));
 
 
         for iteration in 1..self.iterations {
             info!("Iteration {}",iteration);
             for (id,v) in graph.vertex_iter() {
                 let edges = graph.get_incoming(*id);
+
+                let mut incoming_distances = Vec::<(MinMax<i64>,usize)>::new();
                 for e in edges {
-                    //TODO -- need to find the min value from all the incoming edges
-                    //and then compare that to the previous version
+                    if let Ok(dist) = self.distances.get(e.source(),iteration-1) {
+                        if let Value(edge_distance) = dist {
+                            if dist < MinMax::<i64>::Max {
+                                //push a tuple with the new weight as primary element and source vertex
+                                //as 2nd
 
-                    // get the last stance for this vertex
-                    let last = self.distances.get(*id,iteration-1);
-
-                    // calculuate the distance via the incoming edge
-                    let cur = match self.distances.get(e.source(),iteration-1) {
-                        // if the source destination has a distance then calculate it
-                        Some(val) => Some(val + e.weight()),
-                        // otherwise no path yet from the source dest
-                        None => None
-                    };
-                    let new = {
-                        if last == None {
-                            cur
+                                let this_distance = MinMax::Value(edge_distance + e.weight());
+                                let this_entry = (this_distance.clone(),e.source());
+                                debug!("Adding {} from {} {:?}",this_distance, e.source(),this_entry);
+                                incoming_distances.push(this_entry);
+                            }
                         }
-                        else if cur == None {
-                            last
-                        }
-                        else if cur < last {
-                            cur
-                        }
-                        else {
-                            last
-                        }
-                    };
-                    debug!("Vertex {} last {:?} cur via {} -> {:?} new {:?}",id,last,e.source(),cur,new);
-                    if new != None {
-                        self.distances.set(*id,iteration,new.unwrap());
                     }
-                    
                 }
+
+                // start with the values from the last iteration
+                let last = self.distances.get(*id,iteration-1).unwrap();
+                debug!("Vertex {} last iteration value was {}",id,last);
+
+                let mut new = last;
+                // mark the source as the current node (indicating we are taking the last value)
+                let mut source = id.clone();
+
+                if incoming_distances.len() > 0 {
+                    // find the min of the incoming distances (which are in a tuple)
+                    debug!("Incoming option {:?}",incoming_distances);
+                    let (incoming_min, incoming_source) = incoming_distances.iter().min().unwrap();
+                    
+
+                    //check to see if the incoming value is less, if so update the fields from the
+                    //tuple
+                    if *incoming_min < new {
+                        new = *incoming_min;
+                        source = *incoming_source;
+                    }
+                }
+                else {
+                    trace!("Vertex {} - no incoming edges",id);
+                }
+                // set the new value
+                self.distances.set(*id,iteration,new);
+                debug!("Vertex {} iter: {} last {:?} cur via {} -> {:?} new {:?}",id,iteration,last,source,last,new);
             }
         }
 
-        self.distances.log_display();
+        let mut count = 0;
+        for row in self.distances.get_row_iter() {
+            let min = row.iter().min().unwrap();
+            let row_format : String = row.iter().map(|val| format!("{:>4} ",val) ).collect();
+            println!("Iter {:2} :    {}  Min: {}", count,row_format, min);
+            count += 1
+
+        }
 
     }
         
@@ -108,7 +152,7 @@ impl Bellman {
 
     }
 
-    fn print_vertex_result(vertex: u32, result: i64, short: bool) {
+    fn print_vertex_result(vertex: u32, result: MinMax<i64>, short: bool) {
 
         if short {
             print!("{}", result);
