@@ -7,9 +7,9 @@ use crate::dirgraph::DirectedGraph;
 use log::{ info, error, debug, /*warn,*/ trace };
 
 pub struct Dijkstra {
-        explored:  HashMap::<u32,bool>,
+        explored:  HashMap::<usize,bool>,
         unprocessed_vertex : MinHeap::<i64>,
-        processed_vertex : BTreeMap::<u32,i64>,
+        processed_vertex : BTreeMap::<usize,i64>,
 }
 
 
@@ -17,19 +17,19 @@ impl Dijkstra {
 
     pub fn new() -> Dijkstra {
         Dijkstra { 
-            explored:  HashMap::<u32,bool>::new(),
+            explored:  HashMap::<usize,bool>::new(),
             unprocessed_vertex : MinHeap::<i64>::new(),
-            processed_vertex : BTreeMap::<u32,i64>::new(),
+            processed_vertex : BTreeMap::<usize,i64>::new(),
         }
 
     }
 
-    pub fn initialize_vertex(&mut self, vertex_id: u32) {
+    pub fn initialize_vertex(&mut self, vertex_id: usize) {
         self.unprocessed_vertex.insert(vertex_id,100000000);
     }
         
 
-    pub fn shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: u32) {
+    pub fn shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
         info!("Starting shortest path with {}",starting_vertex);
 
         if let Some(starting_index) = self.unprocessed_vertex.get_id_index(starting_vertex) {
@@ -56,11 +56,11 @@ impl Dijkstra {
 
     // Update scoring in the unprocessed pool of vertexes related to 
     // vertex of id.
-    fn update_scoring(&mut self, graph: &DirectedGraph, cur_vertex: u32) {
+    fn update_scoring(&mut self, graph: &DirectedGraph, cur_vertex: usize) {
         debug!("Dijsktra scoring for vertex {}",cur_vertex);
 
-        // get the list of vertexes which are reachable (outgoing) from the current vertex
-        let adj_edges = graph.get_outgoing_vertex(cur_vertex);
+        // get the list of edge that are outgoing from the current vertex
+        let adj_edges = graph.get_outgoing(cur_vertex);
         
         // get the distance/score of the current vertex as a start
         let cur_vertex_distance = self.processed_vertex.get(&cur_vertex).unwrap().clone();
@@ -87,12 +87,12 @@ impl Dijkstra {
 
     }
 
-    pub fn get_processed(&self,index : &u32) -> i64 {
+    pub fn get_processed(&self,index : &usize) -> i64 {
         self.processed_vertex[index]
     }
 
 
-    pub fn print_result(&self, display_list: Vec<u32>, short_display: bool) {
+    pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
         if display_list.len() > 0 {
             for v in display_list {
@@ -116,7 +116,7 @@ impl Dijkstra {
 
     }
 
-    fn print_vertex_result(vertex: u32, result: i64, short: bool) {
+    fn print_vertex_result(vertex: usize, result: i64, short: bool) {
 
         if short {
             print!("{}", result);

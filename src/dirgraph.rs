@@ -8,9 +8,9 @@ use std::fmt;
 
 #[derive(Debug,Clone)]
 pub struct Edge {
-    edge_id: u32,
-    source:  u32,
-    dest:    u32,
+    edge_id: usize,
+    source:  usize,
+    dest:    usize,
     weight:  i64,
 }
 
@@ -24,7 +24,7 @@ impl Display for Edge {
 
 impl Edge {
 
-    pub fn new(new_edge_id: u32, source_vertex_id: u32, dest_vertex_id: u32, weight: i64 ) -> Edge {
+    pub fn new(new_edge_id: usize, source_vertex_id: usize, dest_vertex_id: usize, weight: i64 ) -> Edge {
         trace!("New Edge {} from {} to {} with weight {}",new_edge_id,source_vertex_id,dest_vertex_id,weight);
         Edge {
             edge_id:    new_edge_id,
@@ -35,14 +35,17 @@ impl Edge {
     }
 
 
-    pub fn source(&self) -> u32 {
+    /// Returns the starting vertex of the egde
+    pub fn source(&self) -> usize {
         self.source
     }
 
-    pub fn dest(&self) -> u32 {
+    /// Returns the terminating vertex of the egde
+    pub fn dest(&self) -> usize {
         self.dest
     }
 
+    /// Returns the weight of the egde
     pub fn weight(&self) -> i64 {
         self.weight
     }
@@ -52,17 +55,17 @@ impl Edge {
 
 #[derive(Debug, Clone)]
 pub struct Vertex {
-	vertex_id: u32,
+	vertex_id: usize,
     // set of incomin and outgoing edge ids
-	incoming: BTreeSet<u32>,
-	outgoing: BTreeSet<u32>,
+	incoming: BTreeSet<usize>,
+	outgoing: BTreeSet<usize>,
 }
 
 impl Vertex {
 
-	pub fn new(id : u32) -> Vertex {
-		let incoming = BTreeSet::<u32>::new();
-		let outgoing = BTreeSet::<u32>::new();
+	pub fn new(id : usize) -> Vertex {
+		let incoming = BTreeSet::<usize>::new();
+		let outgoing = BTreeSet::<usize>::new();
 		Vertex {vertex_id: id, 
 				incoming: incoming, 
 				outgoing: outgoing,
@@ -74,44 +77,46 @@ impl Vertex {
         writeln!(f, "Vertex {}", self.vertex_id)
     }
 	
-	pub fn add_outgoing(&mut self, edge_id: u32) {
+	pub fn add_outgoing(&mut self, edge_id: usize) {
         trace!("Adding outgoing edge {} to vertex {}",edge_id, self.vertex_id);
         if !self.outgoing.insert(edge_id) {
            error!("add_outgoing: Vertex {} - outgoing edge {} already exists",edge_id, self.vertex_id)
         }
 	}
 
-	pub fn delete_outgoing (&mut self, edge_id: u32) {
+	pub fn delete_outgoing (&mut self, edge_id: usize) {
         if !self.outgoing.remove(&edge_id) {
            error!("delete_outgoing:  Vertex {} - outgoing edge {} doesn't exist",self.vertex_id,edge_id)
         }
 	}
 
-	pub fn add_incoming(&mut self, edge_id: u32) {
+	pub fn add_incoming(&mut self, edge_id: usize) {
         trace!("Adding incoming edge {} to vertex {}",edge_id,self.vertex_id);
         if !self.incoming.insert(edge_id) {
            error!("add_incoming: Vertex {} - outgoing edge {} already exists",self.vertex_id,edge_id)
         }
 	}
 
-	pub fn delete_incoming (&mut self, edge_id: u32) {
+	pub fn delete_incoming (&mut self, edge_id: usize) {
         if !self.incoming.remove(&edge_id) {
            error!("delete_incoming:  Vertex {} - outgoing edge {} doesn't exist",self.vertex_id,edge_id)
         }
 	
 	}
 
-    pub fn get_outgoing_edges(&self)  -> Vec<u32>{
+    /// Gets a vector of the incoming edge Ids
+    pub fn get_outgoing_edges(&self)  -> Vec<usize>{
         // get the list of outgoing edges and map them to the dest vertex
 		self.outgoing.iter().cloned().collect()
     }
 
-    pub fn get_incoming_edges(&self)  -> Vec<u32>{
+    /// Gets a vector of the outgoing edge Ids
+    pub fn get_incoming_edges(&self)  -> Vec<usize>{
         // get the list of outgoing edges and map them to the dest vertex
 		self.incoming.iter().cloned().collect()
     }
 
-    pub fn id(&self) -> u32 {
+    pub fn id(&self) -> usize {
         self.vertex_id
     }
 }
@@ -119,16 +124,19 @@ impl Vertex {
 
 #[derive(Debug,Clone)]
 pub struct DirectedGraph {
-	vertex_map:  BTreeMap::<u32, Vertex>,
-    edge_map:   BTreeMap::<u32, Edge>,
-    next_edge_id:  u32
+    ///Vertex Map maps a vertex Id to the Vertex Data structure for it
+	vertex_map:  BTreeMap::<usize, Vertex>,
+    ///Edge Map maps a edge Id to the Edge Data structure for it
+    edge_map:   BTreeMap::<usize, Edge>,
+    /// Edge Ids are automatically assiged by define edge and this is the ID of the next edge to be defined
+    next_edge_id:  usize
 }
 
 
 impl DirectedGraph {
 	pub fn new() -> DirectedGraph {
-		let v_map = BTreeMap::<u32, Vertex>::new();
-		let e_map = BTreeMap::<u32, Edge>::new();
+		let v_map = BTreeMap::<usize, Vertex>::new();
+		let e_map = BTreeMap::<usize, Edge>::new();
 		DirectedGraph {
 				vertex_map:     v_map,
 				edge_map:       e_map,
@@ -136,7 +144,8 @@ impl DirectedGraph {
 		}
 	}
 
-	pub fn define_vertex(&mut self, id: u32) -> Option<usize> {
+    /// Defines a new Vertex
+	pub fn define_vertex(&mut self, id: usize) -> Option<usize> {
 
 		if self.vertex_map.contains_key(&id) {
 			None
@@ -149,7 +158,7 @@ impl DirectedGraph {
 		}
     }
 
-	pub fn define_edge(&mut self, source: u32, dest: u32, weight: i64 ) -> Option<u32> {
+	pub fn define_edge(&mut self, source: usize, dest: usize, weight: i64 ) -> Option<usize> {
         if source != 0 && dest != 0 {
             let edge_id = self.next_edge_id.clone();
             self.next_edge_id += 1;
@@ -163,7 +172,7 @@ impl DirectedGraph {
         }
 	}
 
-	pub fn add_edge(&mut self, v1: u32, v2: u32, weight: i64) {
+	pub fn add_edge(&mut self, v1: usize, v2: usize, weight: i64) {
 
 		//create the vertexes, if the don't exist
 		self.define_vertex(v1.clone());
@@ -186,7 +195,8 @@ impl DirectedGraph {
 	}
 
 
-	pub fn get_outgoing_vertex(&self, vertex: u32) -> Vec<Edge>{
+    /// retreives a vector of outogoing edges from a given vertex
+	pub fn get_outgoing(&self, vertex: usize) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
         // by mapping each id to its dest element
@@ -196,7 +206,8 @@ impl DirectedGraph {
 		
 	}
 
-	pub fn get_incoming_vertex(&self, vertex: u32) -> Vec<Edge>{
+    /// retreives a vector of incoming edges to a given vertex
+	pub fn get_incoming(&self, vertex: usize) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
         // by mapping each id to its dest element
@@ -206,11 +217,11 @@ impl DirectedGraph {
 		
 	}
 
-    pub fn vertex_iter(&self) -> std::collections::btree_map::Iter<'_, u32, Vertex> {
+    pub fn vertex_iter(&self) -> std::collections::btree_map::Iter<'_, usize, Vertex> {
         self.vertex_map.iter()
     }
 
-	pub fn get_vertexes(&self) -> Vec<u32> {
+	pub fn get_vertexes(&self) -> Vec<usize> {
 		self.vertex_map.keys().cloned().collect()
 	}
 
@@ -233,7 +244,7 @@ impl DirectedGraph {
 					
 	}
 
-	pub fn delete_edge(&mut self,edge_id: u32) -> Result<(),String>  {
+	pub fn delete_edge(&mut self,edge_id: usize) -> Result<(),String>  {
 	
         if let Some(edge) = self.edge_map.get(&edge_id) {
             self.vertex_map.get_mut(&edge.source).unwrap().delete_outgoing(edge_id)	;
@@ -247,6 +258,14 @@ impl DirectedGraph {
         }
 
 	}
+
+    pub fn vertex_count(&self) -> usize {
+        self.vertex_map.len()
+    }
+
+    pub fn edge_count(&self) -> usize {
+        self.edge_map.len()
+    }
 }
 
 

@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::fs::File;
-use log::{ /* info, error, */ debug, /*warn, trace */};
+use log::{  info ,/* error, */ debug, /*warn, trace */};
 
 use clap::Parser;
 
@@ -15,6 +15,9 @@ use crate::dirgraph::DirectedGraph;
 
 mod dijkstra;
 use crate::dijkstra::Dijkstra;
+
+mod bellman;
+use crate::bellman::Bellman;
 
 mod parse;
 use crate::parse::read_adjacency_multi;
@@ -55,6 +58,18 @@ fn main() {
             for (id, v) in g.vertex_iter() {
                 d.initialize_vertex(id.clone());
             }
+            d.shortest_paths(&g, *start);
+            let list = match display_list {
+                None => vec!(),
+                Some(x) => x.clone(),
+            };
+            d.print_result(list,true);
+
+        },
+        Some(Commands::Bellman { start, display_list }) => {
+            let mut d = Bellman::new(g.vertex_count());
+
+            info!("Staring Bellman");
             d.shortest_paths(&g, *start);
             let list = match display_list {
                 None => vec!(),

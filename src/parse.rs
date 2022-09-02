@@ -4,7 +4,7 @@ use regex::Regex;
 use log::{ info, /*error, */ debug, /*warn,*/ trace };
 
 
-pub fn read_adjacency_single<F: FnMut(u32,u32,i64)>
+pub fn read_adjacency_single<F: FnMut(usize,usize,i64)>
     ( file: & mut File, mut add_edge: F ) {
 
     //open the file
@@ -18,8 +18,8 @@ pub fn read_adjacency_single<F: FnMut(u32,u32,i64)>
     // parse the first line which includes number of vertexes and number of edges
     let first_line_regex = Regex::new(r"\s*(?P<num_vertex>\d+)\s+(?P<num_edges>\d+)\s+.*$").unwrap();
     let caps = first_line_regex.captures(&line).unwrap();
-    let _num_vertex = caps["num_vertex"].parse::<u32>().unwrap(); 
-    let _num_edges = caps["num_edges"].parse::<u32>().unwrap(); 
+    let _num_vertex = caps["num_vertex"].parse::<usize>().unwrap(); 
+    let _num_edges = caps["num_edges"].parse::<usize>().unwrap(); 
 
 	let mut count = 0;
     for line in reader.lines() {
@@ -33,8 +33,8 @@ pub fn read_adjacency_single<F: FnMut(u32,u32,i64)>
         trace!("Line is {}",line_data);
         let caps = line_regex.captures(&line_data).unwrap();
         trace!("Caps is {:#?}",caps);
-        let source = caps["source"].parse::<u32>().unwrap(); 
-        let dest = caps["dest"].parse::<u32>().unwrap(); 
+        let source = caps["source"].parse::<usize>().unwrap(); 
+        let dest = caps["dest"].parse::<usize>().unwrap(); 
         let weight = caps["weight"].parse::<i64>().unwrap(); 
         add_edge(source,dest, weight);
     }
@@ -48,7 +48,7 @@ pub fn read_adjacency_single<F: FnMut(u32,u32,i64)>
 // 1   2,8   3,6
 // 2   1,8  3, 4
 // 3   1,6, 2, 4
-pub fn read_adjacency_multi<F: FnMut(u32,u32,i64)>
+pub fn read_adjacency_multi<F: FnMut(usize,usize,i64)>
     ( file: & mut File, mut add_edge: F ) {
 
     //open the file
@@ -65,7 +65,7 @@ pub fn read_adjacency_multi<F: FnMut(u32,u32,i64)>
         // whitespace
         let caps = re_vertex.captures(&line_data).unwrap();
         let text1 = caps.get(1).map_or("", |m| m.as_str());
-        let vertex = text1.parse::<u32>().unwrap();
+        let vertex = text1.parse::<usize>().unwrap();
         debug!("Reading connectsion for vertex {}",vertex);
 
         let re_adjacent = Regex::new(r"\s*(?P<vertex>\d+)\s*(,|\s)\s*(?P<weight>\d*)").unwrap();
@@ -75,7 +75,7 @@ pub fn read_adjacency_multi<F: FnMut(u32,u32,i64)>
 
         let mut _count =0;
         for caps in re_adjacent.captures_iter(text2) {
-            let dest_vertex = caps["vertex"].parse::<u32>().unwrap(); 
+            let dest_vertex = caps["vertex"].parse::<usize>().unwrap(); 
             let weight = caps["weight"].parse::<i64>().unwrap(); 
             debug!("Adding connection from {} to {} with weight {}",vertex,dest_vertex,weight);
 			let _num_edges = add_edge(vertex,dest_vertex,weight);

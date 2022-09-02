@@ -38,11 +38,19 @@ pub enum Commands {
     /// Executes Dijkstra shortest path on graph
     Dijkstra {
         #[clap(value_parser)]
-        start: u32,
+        start: usize,
 
         #[clap(short, long, value_parser, use_value_delimiter=true)]
         /// list of vertexes to display
-        display_list: Option<Vec<u32>>,
+        display_list: Option<Vec<usize>>,
+    },
+    Bellman {
+        #[clap(value_parser)]
+        start: usize,
+
+        #[clap(short, long, value_parser, use_value_delimiter=true)]
+        /// list of vertexes to display
+        display_list: Option<Vec<usize>>,
     },
     Print {},
 }
