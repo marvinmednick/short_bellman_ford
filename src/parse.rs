@@ -1,7 +1,72 @@
 use std::fs::File;
 use std::io::{BufReader,BufRead};
 use regex::Regex;
-use log::{ info, /*error, */ debug, /*warn,*/ trace };
+use log::{ info, error, debug, /*warn,*/ trace };
+
+
+pub trait DirgraphBuilder {
+    fn add_edge(&self, source: usize,dest: usize,weight: i64) ;
+    fn add_vertex(&self, id:  usize); 
+}
+
+struct ParseGraph<'a>(&'a mut File);
+impl ParseGraph<'_> {
+}
+
+    
+// Format is 1 line per vertex with a tuple consistenting of destination vertex and weight
+// e.g.    
+// 1   2,8   3,6
+// 2   1,8  3, 4
+// 3   1,6, 2, 4
+pub fn test_read ( file: & mut File,  graph_functions: &impl DirgraphBuilder) {
+
+    //open the file
+    let reader = BufReader::new(file);
+
+	let mut _count = 0;
+    for line in reader.lines() {
+		_count += 1;	
+		let line_data = line.unwrap();
+        trace!("Proccesing Line {} - ({})",_count,line_data);
+
+        // split the line into the vertex and the list of adjacent vertexes/weight pairs
+        //let re_vertex = Regex::new(r"\s*(?P<vertex>\d+)\s+(?P<adjacent_list>.*$)").unwrap();
+        let re_vertex = Regex::new(r"^\s*(?P<vertex>\d+)(?P<rest_of_line>.*)$").unwrap();
+        let re_test = Regex::new(r"^\s*(?P<vertex>\d+)(?P<rest_of_line>$)").unwrap();
+        let test1 = re_test.captures(&line_data);
+        trace!("Test is {:?}",test1);
+        // adjacent vertexes are in the format vertex,weight   - and regex below allows for
+        // whitespace
+        if let Some(caps) = re_vertex.captures(&line_data) {
+
+            let text1 = caps.get(1).map_or("", |m| m.as_str());
+            trace!("Text1  = {} caps {:#?}",text1,caps);
+            let vertex = text1.parse::<usize>().unwrap();
+            debug!("Reading connectsion for vertex {}",vertex);
+
+            graph_functions.add_vertex(vertex);
+            let re_adjacent = Regex::new(r"\s*(?P<vertex>\d+)\s*(,|\s)\s*(?P<weight>-?\d*)").unwrap();
+            let text2 = caps.get(2).map_or("", |m| m.as_str());
+            trace!("Adjacency info: {}",text2);
+
+
+            let mut _count =0;
+            for caps in re_adjacent.captures_iter(text2) {
+                let dest_vertex = caps["vertex"].parse::<usize>().unwrap(); 
+                let weight = caps["weight"].parse::<i64>().unwrap(); 
+                debug!("Adding connection from {} to {} with weight {}",vertex,dest_vertex,weight);
+                graph_functions.add_edge(vertex,dest_vertex,weight);
+                //let _num_edges = add_edge(vertex,dest_vertex,weight);
+                _count += 1;
+
+            }
+        }
+        else {
+            error!("Line {} - No vertex found ({})",_count,line_data)
+        }
+    }
+}
 
 
 pub fn read_adjacency_single<F: FnMut(usize,usize,i64)>
@@ -42,7 +107,6 @@ pub fn read_adjacency_single<F: FnMut(usize,usize,i64)>
 }
 
 
-// 
 // Format is 1 line per vertex with a tuple consistenting of destination vertex and weight
 // e.g.    
 // 1   2,8   3,6
@@ -58,29 +122,41 @@ pub fn read_adjacency_multi<F: FnMut(usize,usize,i64)>
     for line in reader.lines() {
 		_count += 1;	
 		let line_data = line.unwrap();
+        trace!("Proccesing Line {} - ({})",_count,line_data);
 
         // split the line into the vertex and the list of adjacent vertexes/weight pairs
-        let re_vertex = Regex::new(r"\s*(?P<vertex>\d+)\s+(?P<adjacent_list>.*$)").unwrap();
+        //let re_vertex = Regex::new(r"\s*(?P<vertex>\d+)\s+(?P<adjacent_list>.*$)").unwrap();
+        let re_vertex = Regex::new(r"^\s*(?P<vertex>\d+)(?P<rest_of_line>.*)$").unwrap();
+        let re_test = Regex::new(r"^\s*(?P<vertex>\d+)(?P<rest_of_line>$)").unwrap();
+        let test1 = re_test.captures(&line_data);
+        trace!("Test is {:?}",test1);
         // adjacent vertexes are in the format vertex,weight   - and regex below allows for
         // whitespace
-        let caps = re_vertex.captures(&line_data).unwrap();
-        let text1 = caps.get(1).map_or("", |m| m.as_str());
-        let vertex = text1.parse::<usize>().unwrap();
-        debug!("Reading connectsion for vertex {}",vertex);
+        if let Some(caps) = re_vertex.captures(&line_data) {
 
-        let re_adjacent = Regex::new(r"\s*(?P<vertex>\d+)\s*(,|\s)\s*(?P<weight>\d*)").unwrap();
-        let text2 = caps.get(2).map_or("", |m| m.as_str());
-        trace!("Adjacency info: {}",text2);
+            let text1 = caps.get(1).map_or("", |m| m.as_str());
+            trace!("Text1  = {} caps {:#?}",text1,caps);
+            let vertex = text1.parse::<usize>().unwrap();
+            debug!("Reading connectsion for vertex {}",vertex);
+
+            let re_adjacent = Regex::new(r"\s*(?P<vertex>\d+)\s*(,|\s)\s*(?P<weight>-?\d*)").unwrap();
+            let text2 = caps.get(2).map_or("", |m| m.as_str());
+            trace!("Adjacency info: {}",text2);
 
 
-        let mut _count =0;
-        for caps in re_adjacent.captures_iter(text2) {
-            let dest_vertex = caps["vertex"].parse::<usize>().unwrap(); 
-            let weight = caps["weight"].parse::<i64>().unwrap(); 
-            debug!("Adding connection from {} to {} with weight {}",vertex,dest_vertex,weight);
-			let _num_edges = add_edge(vertex,dest_vertex,weight);
-            _count += 1;
+            let mut _count =0;
+            for caps in re_adjacent.captures_iter(text2) {
+                let dest_vertex = caps["vertex"].parse::<usize>().unwrap(); 
+                let weight = caps["weight"].parse::<i64>().unwrap(); 
+                debug!("Adding connection from {} to {} with weight {}",vertex,dest_vertex,weight);
+                add_edge(vertex,dest_vertex,weight);
+                //let _num_edges = add_edge(vertex,dest_vertex,weight);
+                _count += 1;
 
+            }
+        }
+        else {
+            error!("Line {} - No vertex found ({})",_count,line_data)
         }
     }
 }

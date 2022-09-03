@@ -22,6 +22,7 @@ pub struct CommandArgs  {
 
    #[clap(subcommand)]
    pub command: Option<Commands>,
+
     
     //pub input_format: InputFileFormat,
 }

@@ -1,5 +1,5 @@
 extern crate two_d_array;
-use std::collections::{HashMap,BTreeMap};
+//use std::collections::{HashMap,BTreeMap};
 use two_d_array::TwoDArray;
 
 use crate::dirgraph::DirectedGraph;
@@ -36,6 +36,7 @@ pub struct Bellman {
         distances:  TwoDArray<MinMax<i64>>,
         num_vertex: usize,
         iterations: usize,
+        last_iteration: usize,
 }
 
 
@@ -49,6 +50,7 @@ impl Bellman {
             distances:  TwoDArray::<MinMax<i64>>::new(width,height,MinMax::Max),
             num_vertex: width,
             iterations: height,
+            last_iteration: 0,
         }
 
     }
@@ -64,6 +66,7 @@ impl Bellman {
 
         for iteration in 1..self.iterations {
             info!("Iteration {}",iteration);
+            let mut changes_during_iteration = false;
             for (id,v) in graph.vertex_iter() {
                 let edges = graph.get_incoming(*id);
 
@@ -103,6 +106,7 @@ impl Bellman {
                     if *incoming_min < new {
                         new = *incoming_min;
                         source = *incoming_source;
+                        changes_during_iteration = true;
                     }
                 }
                 else {
@@ -111,6 +115,12 @@ impl Bellman {
                 // set the new value
                 self.distances.set(*id,iteration,new);
                 debug!("Vertex {} iter: {} last {:?} cur via {} -> {:?} new {:?}",id,iteration,last,source,last,new);
+
+            }
+            self.last_iteration += 1;
+            if !changes_during_iteration {
+                info!("No changes during iteration {} ... finishing", iteration);
+                break;
             }
         }
 
@@ -118,41 +128,48 @@ impl Bellman {
         for row in self.distances.get_row_iter() {
             let min = row.iter().min().unwrap();
             let row_format : String = row.iter().map(|val| format!("{:>4} ",val) ).collect();
-            println!("Iter {:2} :    {}  Min: {}", count,row_format, min);
+            trace!("Iter {:2} :    {}  Min: {}", count,row_format, min);
             count += 1
 
         }
 
     }
         
-
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
+
         if display_list.len() > 0 {
             for v in display_list {
-                if is_first { is_first = false; } else { print!(","); };
-                    println!("TODO");
-                   /*Bellman::print_vertex_result(v, self.distances.get(&v,),short_display);
+                if v < self.num_vertex {
+                   if !is_first {
+                       print!(",");
+                    }
+                   is_first = false;
+                   Bellman::print_vertex_result(v, self.distances.get(v,self.last_iteration).unwrap(),short_display);
                 }
                 else {
                     error!("Dest Vertex {} is invalid",v);
                 }
-                */
             }
             println!();
 
         }
         else {
-            println!("TODO");
-           /* for (v, result) in self.processed_vertex.iter() {
-                Bellman::print_vertex_result(*v, *result,short_display);
-            } */
+            let mut index = 0;
+            for result in self.distances.get_row(self.last_iteration) {
+               if !is_first {
+                   print!(",");
+                }
+               is_first = false;
+               Bellman::print_vertex_result(index, *result, short_display);
+               index += 1;
+            } 
             println!();
         }
 
     }
 
-    fn print_vertex_result(vertex: u32, result: MinMax<i64>, short: bool) {
+    fn print_vertex_result(vertex: usize, result: MinMax<i64>, short: bool) {
 
         if short {
             print!("{}", result);
