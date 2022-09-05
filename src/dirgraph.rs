@@ -6,6 +6,8 @@ use log::{ /* info */ error, /* debug,*/ warn, trace };
 use std::fmt::Display; 
 use std::fmt;
 
+use crate::graphbuilder::GraphBuilder;
+
 #[derive(Debug,Clone)]
 pub struct Edge {
     edge_id: usize,
@@ -132,6 +134,35 @@ pub struct DirectedGraph {
     next_edge_id:  usize
 }
 
+impl GraphBuilder for &mut DirectedGraph {
+
+	fn add_edge(&mut self, v1: usize, v2: usize, weight: i64) {
+
+		//create the vertexes, if the don't exist
+		self.define_vertex(v1.clone());
+		self.define_vertex(v2.clone());
+        if let Some (edge_id) = self.define_edge(v1.clone(),v2.clone(),weight) {
+            let v_map = &mut self.vertex_map;
+
+            // add the edge to the first vertex's adjacency outgoing list
+            let vert1 = v_map.get_mut(&v1).unwrap();
+            vert1.add_outgoing(edge_id);
+
+            // add the edge to the second vertex adjacency incoming list
+            let vert2 = v_map.get_mut(&v2).unwrap();
+            vert2.add_incoming(edge_id);
+        }
+        else {
+            error!("Error adding Edge  v1 {} v2 {} w {}",v1,v2,weight);
+        }
+
+	}
+    fn add_vertex(&mut self, id:  usize) { 
+        self.define_vertex(id);
+    }
+}
+
+
 
 impl DirectedGraph {
 	pub fn new() -> DirectedGraph {
@@ -172,27 +203,6 @@ impl DirectedGraph {
         }
 	}
 
-	pub fn add_edge(&mut self, v1: usize, v2: usize, weight: i64) {
-
-		//create the vertexes, if the don't exist
-		self.define_vertex(v1.clone());
-		self.define_vertex(v2.clone());
-        if let Some (edge_id) = self.define_edge(v1.clone(),v2.clone(),weight) {
-            let v_map = &mut self.vertex_map;
-
-            // add the edge to the first vertex's adjacency outgoing list
-            let vert1 = v_map.get_mut(&v1).unwrap();
-            vert1.add_outgoing(edge_id);
-
-            // add the edge to the second vertex adjacency incoming list
-            let vert2 = v_map.get_mut(&v2).unwrap();
-            vert2.add_incoming(edge_id);
-        }
-        else {
-            error!("Error adding Edge  v1 {} v2 {} w {}",v1,v2,weight);
-        }
-
-	}
 
 
     /// retreives a vector of outogoing edges from a given vertex

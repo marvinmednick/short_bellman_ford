@@ -5,6 +5,7 @@ use log::{  info ,/* error, */ debug, /*warn, trace */};
 use clap::Parser;
 
 
+mod graphbuilder;
 
 mod cmd_line;
 use crate::cmd_line::CommandArgs;
@@ -20,7 +21,7 @@ mod bellman;
 use crate::bellman::Bellman;
 
 mod parse;
-use crate::parse::read_adjacency_multi;
+use crate::parse::{read_adjacency_multi };
 
 fn main() {
 
@@ -44,9 +45,10 @@ fn main() {
 
 	let mut g = DirectedGraph::new();
 
-    let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
+    read_adjacency_multi(&mut file, &mut g );
 
-    read_adjacency_multi(&mut file, add_edge_fn);
+//    let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
+////    read_adjacency_multi(&mut file, add_edge_fn);
     //g.print_vertexes();
 
 
