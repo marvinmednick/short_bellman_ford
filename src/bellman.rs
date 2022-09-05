@@ -125,6 +125,10 @@ impl Bellman {
         }
 
         let mut count = 0;
+        let header : String = (0..self.num_vertex).map(|index| format!("{:>4} ",index) ).collect();
+        trace!("{:13}{}","Vertex",header);
+            
+
         for row in self.distances.get_row_iter() {
             let min = row.iter().min().unwrap();
             let row_format : String = row.iter().map(|val| format!("{:>4} ",val) ).collect();
