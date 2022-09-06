@@ -273,16 +273,41 @@ impl DirectedGraph {
 		v.get_incoming_edges()
     }
 
-    pub fn get_incoming_connection_info(&self, source: usize, dest: usize) -> Option<i64> {
-		let v = self.vertex_map.get(&dest).unwrap();
+    /// return the weight of the incoming connection from a given ource vertex (if it existss) or
+    /// None
+    ///
+    pub fn get_incoming_connection_weight(&self, source: usize, vertex: usize) -> Option<i64> {
+		let v = self.vertex_map.get(&vertex).unwrap();
 
-		let incoming_info = v.get_incoming_edges()
+		let find_result = v.get_incoming_edges()
             .iter()
-            .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.source, edge.weight) })
-            .find(|e| matches!(e.0,source));
+            .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.source.clone(), edge.weight.clone()) })
+            .find(|e| { e.0 == source } );
         
-        debug!("Result {:?}",incoming_info);
-        None
+        debug!("Incoming Result info looking for source {} as incoming to {} {:?}",source, vertex , find_result);
+        match find_result {
+            None => None,
+            Some((vertex,weight)) => Some(weight),
+        }
+    }
+
+
+    /// return the weight of the incoming connection from a given ource vertex (if it existss) or
+    /// None
+    ///
+    pub fn get_outgoing_connection_weight(&self, vertex: usize, dest: usize) -> Option<i64> {
+		let v = self.vertex_map.get(&vertex).unwrap();
+
+		let find_result = v.get_outgoing_edges()
+            .iter()
+            .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.dest.clone(), edge.weight.clone()) })
+            .find(|e| { e.0 == dest } );
+        
+        debug!("Incoming Result info looking for dest {} outgoing from {} {:?}",dest, vertex , find_result);
+        match find_result {
+            None => None,
+            Some((vertex,weight)) => Some(weight),
+        }
     }
 
 
@@ -362,7 +387,7 @@ impl DirectedGraph {
 mod tests {
     use crate::dirgraph::DirectedGraph;
     use crate::graphbuilder::GraphBuilder;
-    use log::{ /* info */ error, debug, warn, trace };
+    use log::{  info, error, debug, warn, trace };
 
 
     #[test]
@@ -376,6 +401,7 @@ mod tests {
     fn test_init() -> DirectedGraph {
           println!("starting");
           let _ = env_logger::builder().is_test(true).try_init();
+          info!("Init {}",module_path!());
           DirectedGraph::new()
     }
 
@@ -385,8 +411,8 @@ mod tests {
 		assert_eq!(g.add_edge(1,2,1),Some(1));
 		assert_eq!(g.add_edge(1,3,1),Some(2));
 		assert_eq!(g.add_edge(2,3,1),Some(3));
-		assert_eq!(g.add_edge(2,4,1),Some(4));
-		assert_eq!(g.add_edge(3,4,1),Some(5));
+		assert_eq!(g.add_edge(2,4,22),Some(4));
+		assert_eq!(g.add_edge(3,4,33),Some(5));
 		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
 		assert_eq!(g.get_outgoing_vertex(2),&[3,4]);
 		assert_eq!(g.get_outgoing_vertex(3),&[4]);
@@ -443,14 +469,20 @@ mod tests {
 		
 	}
 
-/*
+
 	#[test]
 	fn test_incoming_connection_info() {
-		let mut g = setup_basic1();
-		assert_eq!(g.get_incoming_connection_info(2,4),None);
-		assert_eq!(g.get_incoming_connection_info(1,4),None);
+		let mut graph = setup_basic1();
+        let mut g = &mut graph;
+//		println!("{:#?}",g);
+		assert_eq!(g.get_incoming_connection_weight(2,4),Some(22));
+		assert_eq!(g.get_incoming_connection_weight(1,4),None);
+		assert_eq!(g.get_outgoing_connection_weight(1,2),Some(1));
+		assert_eq!(g.get_outgoing_connection_weight(1,4),None);
+		assert_eq!(g.add_edge(1,4,44),Some(6));
+		assert_eq!(g.get_outgoing_connection_weight(1,4),Some(44));
 
 	}
-*/
+
 
 }
