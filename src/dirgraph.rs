@@ -1,7 +1,7 @@
 //use std::process; use std::io::{self, Write}; // use std::error::Error;
 //use std::cmp;
 use std::collections::{BTreeMap, BTreeSet};
-use log::{ /* info */ error, debug, warn, trace };
+use log::{  info, error, debug, warn, trace };
 
 use std::fmt::Display; 
 use std::fmt;
@@ -303,7 +303,7 @@ impl DirectedGraph {
             .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.dest.clone(), edge.weight.clone()) })
             .find(|e| { e.0 == dest } );
         
-        debug!("Incoming Result info looking for dest {} outgoing from {} {:?}",dest, vertex , find_result);
+        debug!("get_outoing_conn_weight: dest {} outgoing from {} {:?}",dest, vertex , find_result);
         match find_result {
             None => None,
             Some((vertex,weight)) => Some(weight),
@@ -360,23 +360,27 @@ impl DirectedGraph {
     pub fn edge_count(&self) -> usize {
         self.edge_map.len()
     }
-/*
+
     pub fn verify_path(&self, path: Vec<usize> ) -> Option<i64> {
         let mut total_weight = 0;
-
         
-        for path_index in 0..path.len() {
-            if let Some(vertex) = self.vertex_map.get(&path_index) {
-               // check to see if vertex has outgoing edge to next time in the path 
+        info!("Checking to see if path {:?} is valid",path);
+        for path_index in 0..path.len()-1 {
+            let source = path[path_index];
+            let dest = path[path_index+1];
+            if let Some(weight) = self.get_outgoing_connection_weight(source,dest) {
+                total_weight += weight;
+                info!("Vertex {} has an outgoing connection to Vertex {} with a weight of {}",source,dest,weight);
+            }
+            else {
+                error!("No outgoing connection from {} to {}",source,dest);
+                return None
             }
 
         }
-        None
-
-
+        Some(total_weight)
         
     }
-    */
 }
 
 
@@ -408,6 +412,9 @@ mod tests {
 	fn setup_basic1() -> DirectedGraph {
 		let mut graph = test_init();
         let mut g = &mut graph;
+        // 1->2->3-4
+        // 1->3
+        // 2->
 		assert_eq!(g.add_edge(1,2,1),Some(1));
 		assert_eq!(g.add_edge(1,3,1),Some(2));
 		assert_eq!(g.add_edge(2,3,1),Some(3));
@@ -484,5 +491,11 @@ mod tests {
 
 	}
 
-
+	#[test]
+	fn test_verify_path() {
+		let mut graph = setup_basic1();
+        let mut g = &mut graph;
+		assert_eq!(g.verify_path(vec!(1,2,3,4)),Some(35));
+		assert_eq!(g.verify_path(vec!(4,1)),None);
+    }
 }

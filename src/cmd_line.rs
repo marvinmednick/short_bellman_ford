@@ -33,10 +33,12 @@ pub struct CommandArgs  {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// does testing things
-    Test {
-        /// lists test values
+    Verify {
+        /// Verifies if all elements of  specified path exists in the graph
         #[clap(short, long, action)]
-        list: bool,
+        #[clap(short, long, value_parser, use_value_delimiter=true)]
+        /// list of vertexes to display
+        path: Vec<usize>,
     },
     /// Executes Dijkstra shortest path on graph
     Dijkstra {

@@ -88,8 +88,12 @@ fn main() {
             }
 
         },
-        Some(Commands::Test {..}) => {
-            todo!();
+        Some(Commands::Verify {path}) => {
+            let result = g.verify_path(path.to_vec());
+            match result {
+                Some(weight) => println!("Path is valid and has a weight of {}", weight),
+                None =>  println!("Path is not valid"),
+            }
         },
         Some(Commands::Print {..}) => {
             println!("Printing Graphs...");
