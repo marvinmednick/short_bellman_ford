@@ -50,7 +50,9 @@ where F: GraphBuilder,
                 let dest_vertex = caps["vertex"].parse::<usize>().unwrap(); 
                 let weight = caps["weight"].parse::<i64>().unwrap(); 
                 debug!("Adding connection from {} to {} with weight {}",vertex,dest_vertex,weight);
-                graph_functions.add_edge(vertex,dest_vertex,weight);
+                if None == graph_functions.add_edge(vertex,dest_vertex,weight) {
+                    error!("Cound not Add..");
+                }
                 _count += 1;
 
             }

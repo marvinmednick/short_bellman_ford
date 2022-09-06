@@ -1,5 +1,5 @@
 extern crate minheap;
-use std::collections::{HashMap,BTreeMap};
+use std::collections::{BTreeMap};
 use minheap::MinHeap;
 
 use crate::dirgraph::DirectedGraph;
@@ -7,7 +7,7 @@ use crate::dirgraph::DirectedGraph;
 use log::{ info, error, debug, /*warn,*/ trace };
 
 pub struct Dijkstra {
-        explored:  HashMap::<usize,bool>,
+        //explored:  HashMap::<usize,bool>,
         unprocessed_vertex : MinHeap::<i64>,
         processed_vertex : BTreeMap::<usize,i64>,
 }
@@ -17,7 +17,7 @@ impl Dijkstra {
 
     pub fn new() -> Dijkstra {
         Dijkstra { 
-            explored:  HashMap::<usize,bool>::new(),
+            //explored:  HashMap::<usize,bool>::new(),
             unprocessed_vertex : MinHeap::<i64>::new(),
             processed_vertex : BTreeMap::<usize,i64>::new(),
         }

@@ -1,5 +1,5 @@
 extern crate two_d_array;
-//use std::collections::{HashMap,BTreeMap};
+use std::collections::{BTreeMap};
 use two_d_array::TwoDArray;
 
 use crate::dirgraph::DirectedGraph;
@@ -7,7 +7,7 @@ use crate::dirgraph::DirectedGraph;
 use log::{ info, error, debug, /*warn,*/ trace };
 
 use std::fmt;
-use crate::bellman::MinMax::Value;
+use crate::bellman::MinMax::{Value,NA};
 
 #[derive(Debug,Clone,Copy,PartialOrd,Ord,PartialEq,Eq)]
 pub enum MinMax<T> {
@@ -33,10 +33,22 @@ impl<T: fmt::Display> fmt::Display for MinMax<T>
 
 
 pub struct Bellman {
+        /// Two dimensional array containing the length of the shortest path to each vertex for
+        /// each iteration (size is )
         distances:  TwoDArray<MinMax<i64>>,
+        /// For each vertex the precessor contains the preceeding vertex in the path.  The vertexes
+        /// of shortest path can be found by traversing the precessor vertexes back to the source
+        predecessor:  BTreeMap<usize,MinMax<usize>>,
+        // number of vertexes is set to 1 more than the actually number of vertex to simplify having vertex numbers starting at one without a
+        // mapping.  Vertex 0 is unused
         num_vertex: usize,
+        // number of iterations -- genearlly set to the same as the number of vertexes to allow
+        // detection of negative cycles.  (Note that this also supports vertex 0 even if the first
+        // vertex id is 1 as not to have to map from vertex ids to indexes.) 
         iterations: usize,
         last_iteration: usize,
+        starting_vertex: usize,
+        found_negative_cycle : bool,
 }
 
 
@@ -44,13 +56,23 @@ impl Bellman {
 
     pub fn new(num_vertex: usize ) -> Bellman {
         let width = num_vertex+1;
-        let height = num_vertex;
+        let height = num_vertex+1;
+        let mut preceeding = BTreeMap::<usize,MinMax<usize>>::new();
+
+
+        // initialize the preceeding vertex to Max indicating no path yet
+        for id in 0..width {
+            preceeding.insert(id,NA);
+        }
 
         Bellman { 
             distances:  TwoDArray::<MinMax<i64>>::new(width,height,MinMax::Max),
+            predecessor:  preceeding,
             num_vertex: width,
             iterations: height,
             last_iteration: 0,
+            starting_vertex: 0,
+            found_negative_cycle: false,
         }
 
     }
@@ -58,16 +80,19 @@ impl Bellman {
     /// Find the shortest path from a starting vertex to all other vertexes in the graph
     pub fn shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
         info!("Starting shortest path with {}",starting_vertex);
+        self.found_negative_cycle = false;
 
         // initialite the first iteration with the distance from the starting
         // vertex to itself as 0 -- all other items will be left at none
         self.distances.set(starting_vertex,0,MinMax::Value(0));
+        self.starting_vertex = starting_vertex;
 
 
+        // vertex ids start at 1.
         for iteration in 1..self.iterations {
             info!("Iteration {}",iteration);
             let mut changes_during_iteration = false;
-            for (id,v) in graph.vertex_iter() {
+            for (id,_v) in graph.vertex_iter() {
                 let edges = graph.get_incoming(*id);
 
                 let mut incoming_distances = Vec::<(MinMax<i64>,usize)>::new();
@@ -77,8 +102,7 @@ impl Bellman {
                             if dist < MinMax::<i64>::Max {
                                 //push a tuple with the new weight as primary element and source vertex
                                 //as 2nd
-
-                                let this_distance = MinMax::Value(edge_distance + e.weight());
+let this_distance = MinMax::Value(edge_distance + e.weight());
                                 let this_entry = (this_distance.clone(),e.source());
                                 debug!("Adding {} from {} {:?}",this_distance, e.source(),this_entry);
                                 incoming_distances.push(this_entry);
@@ -107,6 +131,8 @@ impl Bellman {
                         new = *incoming_min;
                         source = *incoming_source;
                         changes_during_iteration = true;
+                        self.predecessor.insert(*id, Value(source.clone()));
+
                     }
                 }
                 else {
@@ -122,6 +148,11 @@ impl Bellman {
                 info!("No changes during iteration {} ... finishing", iteration);
                 break;
             }
+            else if iteration == self.iterations-1 {
+                info!("changes deteted in {} iteration --- Graph has a negative cycle", iteration);
+                self.found_negative_cycle = true;
+
+            }
         }
 
         let mut count = 0;
@@ -132,12 +163,21 @@ impl Bellman {
         for row in self.distances.get_row_iter() {
             let min = row.iter().min().unwrap();
             let row_format : String = row.iter().map(|val| format!("{:>4} ",val) ).collect();
-            trace!("Iter {:2} :    {}  Min: {}", count,row_format, min);
+            info!("Iter {:2} :    {}  Min: {}", count,row_format, min);
             count += 1
 
         }
 
+        for v in self.predecessor.keys() {
+            self.find_path(starting_vertex, *v);
+        }
+
     }
+
+    pub fn has_negative_cycle(&self) -> bool {
+        self.found_negative_cycle
+    }
+    
         
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
@@ -184,5 +224,59 @@ impl Bellman {
 
     }
 
+
+    fn find_path(&self,starting_vertex: usize, dest_vertex: usize) -> Vec<usize>{
+
+        info!("Finding path for vertex {}", dest_vertex);
+        let mut vertex_list = Vec::<usize>::new();
+        let mut predecessor_count = 0;
+        // put the destination vertex at the end of the list to match the stanford test cases
+        // (doesn't seem correct to me)
+        vertex_list.push(dest_vertex);
+        
+        // unless this vertex doesn't have a predecessor (indicating no path from starting vertex)
+        // add it to the end of the path
+        if self.predecessor[&dest_vertex] != NA || dest_vertex == self.starting_vertex {
+
+            let mut current_vertex = dest_vertex;
+            let mut done = false;
+            while self.predecessor[&current_vertex] != NA && !done {
+                predecessor_count += 1;
+                if let Value(preceeding_vertex) = self.predecessor[&current_vertex] {
+                    trace!("Adding Vertex {} to the path", preceeding_vertex);
+                    vertex_list.push(preceeding_vertex.clone());
+                    current_vertex = preceeding_vertex;
+                }
+                else {
+                    error!("Unexpected Value");
+                }
+                if predecessor_count > self.num_vertex || current_vertex == self.starting_vertex {
+                    done = true;
+                }
+
+             }
+        }
+        let path : Vec<usize> = vertex_list.into_iter().rev().collect();
+        info!("Path from vertex {} to vertex {} -> {:?}", starting_vertex, dest_vertex, path);
+        path
+
+    }
+
+    pub fn print_paths(&self, vertex_list: Vec<usize>) {
+
+        for v in vertex_list {
+            let path = self.find_path(self.starting_vertex, v);
+            let has_cycle = path.len() > self.num_vertex;
+
+            let mut first=true;
+            let path_string : String = path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
+
+            print!("{} => path => {}",v,path_string);
+            if has_cycle {
+                print!("... (has cycle)");
+            }
+            println!();
+        }
+    }
 
 }

@@ -57,7 +57,7 @@ fn main() {
         Some(Commands::Dijkstra { start, display_list }) => {
             let mut d = Dijkstra::new();
 
-            for (id, v) in g.vertex_iter() {
+            for (id, _v) in g.vertex_iter() {
                 d.initialize_vertex(id.clone());
             }
             d.shortest_paths(&g, *start);
@@ -68,7 +68,7 @@ fn main() {
             d.print_result(list,true);
 
         },
-        Some(Commands::Bellman { start, display_list }) => {
+        Some(Commands::Bellman { start, display_list, show_paths }) => {
             let mut d = Bellman::new(g.vertex_count());
 
             info!("Staring Bellman");
@@ -77,7 +77,15 @@ fn main() {
                 None => vec!(),
                 Some(x) => x.clone(),
             };
-            d.print_result(list,true);
+            if d.has_negative_cycle() {
+                println!("Negative cycle found...")
+            }
+            if *show_paths {
+                d.print_paths(g.get_vertexes());
+            }
+            else {
+                d.print_result(list,true);
+            }
 
         },
         Some(Commands::Test {..}) => {
@@ -101,9 +109,9 @@ fn main() {
  * cargo test --package rust-template -- --nocapture
  * Note: 'rust-template' comes from Cargo.toml's 'name' key
  */
-
+/*
 // use the attribute below for unit tests
-#[cfg(test)]
+ #[cfg(test)]
 mod tests {
     use super::*;
 
@@ -166,3 +174,4 @@ mod tests {
 
 
 }
+*/

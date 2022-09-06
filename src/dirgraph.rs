@@ -1,7 +1,7 @@
 //use std::process; use std::io::{self, Write}; // use std::error::Error;
 //use std::cmp;
 use std::collections::{BTreeMap, BTreeSet};
-use log::{ /* info */ error, /* debug,*/ warn, trace };
+use log::{ /* info */ error, debug, warn, trace };
 
 use std::fmt::Display; 
 use std::fmt;
@@ -121,6 +121,8 @@ impl Vertex {
     pub fn id(&self) -> usize {
         self.vertex_id
     }
+
+
 }
 
 
@@ -134,9 +136,10 @@ pub struct DirectedGraph {
     next_edge_id:  usize
 }
 
+
 impl GraphBuilder for &mut DirectedGraph {
 
-	fn add_edge(&mut self, v1: usize, v2: usize, weight: i64) {
+	fn add_edge(&mut self, v1: usize, v2: usize, weight: i64) -> Option<usize> {
 
 		//create the vertexes, if the don't exist
 		self.define_vertex(v1.clone());
@@ -151,17 +154,20 @@ impl GraphBuilder for &mut DirectedGraph {
             // add the edge to the second vertex adjacency incoming list
             let vert2 = v_map.get_mut(&v2).unwrap();
             vert2.add_incoming(edge_id);
+            Some(edge_id)
         }
         else {
             error!("Error adding Edge  v1 {} v2 {} w {}",v1,v2,weight);
+            None
         }
 
 	}
+
+
     fn add_vertex(&mut self, id:  usize) { 
         self.define_vertex(id);
     }
 }
-
 
 
 impl DirectedGraph {
@@ -205,7 +211,7 @@ impl DirectedGraph {
 
 
 
-    /// retreives a vector of outogoing edges from a given vertex
+    
 	pub fn get_outgoing(&self, vertex: usize) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
@@ -215,6 +221,26 @@ impl DirectedGraph {
 		v.get_outgoing_edges().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
 		
 	}
+
+    /// retreives a vector of outogoing vertex_id from a given vertex
+	pub fn get_outgoing_vertex(&self, vertex: usize) -> Vec<usize>{
+		let v = self.vertex_map.get(&vertex).unwrap();
+        // get the list of vertexe that this vertex has outgoing edges to (i.e vertexes that )accessible from this vertex)
+        // by mapping each id to its dest element
+        // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
+        // returns 'None' ; this shouldn't occur, and will crash here if it did
+		v.get_outgoing_edges()
+            .iter()
+            .map(|x| {let e = self.edge_map.get(&x).unwrap(); e.dest }
+            .clone())
+            .collect()
+	}
+
+
+	pub fn get_outgoing_edge_ids(&self, vertex: usize) -> Vec<usize>{
+		let v = self.vertex_map.get(&vertex).unwrap();
+		v.get_outgoing_edges()
+    }
 
     /// retreives a vector of incoming edges to a given vertex
 	pub fn get_incoming(&self, vertex: usize) -> Vec<Edge>{
@@ -226,6 +252,39 @@ impl DirectedGraph {
 		v.get_incoming_edges().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
 		
 	}
+
+    /// retreives a vector of incoming vertex_id from a given vertex
+	pub fn get_incoming_vertex(&self, vertex: usize) -> Vec<usize>{
+		let v = self.vertex_map.get(&vertex).unwrap();
+        // get the list of vertexes that have edges incoming to this vertex 
+        // by mapping each id to its dest element
+        // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
+        // returns 'None' ; this shouldn't occur, and will crash here if it did
+		v.get_incoming_edges()
+            .iter()
+            .map(|x| {let e = self.edge_map.get(&x).unwrap(); e.source }
+            .clone())
+            .collect()
+	}
+
+
+	pub fn get_incoming_edges(&self, vertex: usize) -> Vec<usize>{
+		let v = self.vertex_map.get(&vertex).unwrap();
+		v.get_incoming_edges()
+    }
+
+    pub fn get_incoming_connection_info(&self, source: usize, dest: usize) -> Option<i64> {
+		let v = self.vertex_map.get(&dest).unwrap();
+
+		let incoming_info = v.get_incoming_edges()
+            .iter()
+            .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.source, edge.weight) })
+            .find(|e| matches!(e.0,source));
+        
+        debug!("Result {:?}",incoming_info);
+        None
+    }
+
 
     pub fn vertex_iter(&self) -> std::collections::btree_map::Iter<'_, usize, Vertex> {
         self.vertex_map.iter()
@@ -276,6 +335,23 @@ impl DirectedGraph {
     pub fn edge_count(&self) -> usize {
         self.edge_map.len()
     }
+/*
+    pub fn verify_path(&self, path: Vec<usize> ) -> Option<i64> {
+        let mut total_weight = 0;
+
+        
+        for path_index in 0..path.len() {
+            if let Some(vertex) = self.vertex_map.get(&path_index) {
+               // check to see if vertex has outgoing edge to next time in the path 
+            }
+
+        }
+        None
+
+
+        
+    }
+    */
 }
 
 
@@ -284,64 +360,97 @@ impl DirectedGraph {
 // use the attribute below for unit tests
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::dirgraph::DirectedGraph;
+    use crate::graphbuilder::GraphBuilder;
+    use log::{ /* info */ error, debug, warn, trace };
+
+
+    #[test]
+    fn most_basic() {
+		let mut g = DirectedGraph::new();
+		assert_eq!(g.define_vertex(1),Some(1));
+		assert_eq!((&mut g).add_edge(2,3,1),Some(1));
+		assert_eq!((&mut g).add_edge(1,2,1),Some(2));
+    }
+
+    fn test_init() -> DirectedGraph {
+          println!("starting");
+          let _ = env_logger::builder().is_test(true).try_init();
+          DirectedGraph::new()
+    }
 
 	fn setup_basic1() -> DirectedGraph {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.add_edge(1,2),Some(1));
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.add_edge(2,3),Some(1));
-		assert_eq!(g.add_edge(2,4),Some(2));
-		assert_eq!(g.add_edge(3,4),Some(1));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_outgoing(2),&[3,4]);
-		assert_eq!(g.get_outgoing(3),&[4]);
-		assert_eq!(g.get_outgoing(4),&[]);
-		g
+		let mut graph = test_init();
+        let mut g = &mut graph;
+		assert_eq!(g.add_edge(1,2,1),Some(1));
+		assert_eq!(g.add_edge(1,3,1),Some(2));
+		assert_eq!(g.add_edge(2,3,1),Some(3));
+		assert_eq!(g.add_edge(2,4,1),Some(4));
+		assert_eq!(g.add_edge(3,4,1),Some(5));
+		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
+		assert_eq!(g.get_outgoing_vertex(2),&[3,4]);
+		assert_eq!(g.get_outgoing_vertex(3),&[4]);
+		assert_eq!(g.get_outgoing_vertex(4),&[]);
+		graph
 	} 
 
     #[test]
     fn basic() {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.create_vertex(&1),Some(1));
-		assert_eq!(g.create_vertex(&2),Some(2));
-		assert_eq!(g.add_edge(1,2),Some(1));
+		let mut graph = test_init();
+        let mut g = &mut graph;
+		assert_eq!(g.define_vertex(1),Some(1));
+		assert_eq!(g.define_vertex(2),Some(2));
+		assert_eq!(g.add_edge(1,2,1),Some(1));
 		assert_eq!(g.get_vertexes(),vec!(1,2));
-		assert_eq!(g.create_vertex(&3),Some(3));
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.add_edge(2,3),Some(1));
+		assert_eq!(g.define_vertex(3),Some(3));
+		assert_eq!(g.add_edge(1,3,1),Some(2));
+		assert_eq!(g.add_edge(2,3,1),Some(3));
 		assert_eq!(g.get_vertexes(),vec!(1,2,3));
-		assert_eq!(g.add_edge(1,4),Some(3));
+		assert_eq!(g.add_edge(1,4,1),Some(4));
 		assert_eq!(g.get_vertexes(),vec!(1,2,3,4));
-		println!("{:?}",g);
+//		println!("{:?}",g);
 
     }
 
+    
 	#[test]
 	fn test_add() {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.add_edge(1,2),Some(1));
-		assert_eq!(g.get_outgoing(1),&[2]);
-		assert_eq!(g.get_incoming(2),&[1]);
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_incoming(2),&[1]);
+		let mut graph = test_init();
+        let mut g = &mut graph;
+		assert_eq!(g.add_edge(1,2,1),Some(1));
+//		println!("{:#?}",g);
+		assert_eq!(g.get_outgoing_vertex(1),&[2]);
+		assert_eq!(g.get_incoming_vertex(2),&[1]);
+		assert_eq!(g.add_edge(1,3,1),Some(2));
+		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
+		assert_eq!(g.get_incoming_vertex(2),&[1]);
 	}
 
 	#[test]
 	fn test_add_del() {
-		let mut g = setup_basic1();
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.add_edge(1,2),Some(3));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_outgoing(2),&[3,4]);
-		assert_eq!(g.get_outgoing(3),&[4]);
-		assert_eq!(g.delete_edge(1,2),Ok(()));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.delete_edge(1,2),Ok(()));
-		assert_eq!(g.get_outgoing(1),&[3]);
+		let mut graph = setup_basic1();
+        let mut g = &mut graph;
+		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
+		assert_eq!(g.add_edge(1,2,1),Some(6));
+//		println!("{:#?}",g);
+		assert_eq!(g.get_outgoing_vertex(1),&[2,3,2]);
+		assert_eq!(g.get_outgoing_vertex(2),&[3,4]);
+		assert_eq!(g.get_outgoing_vertex(3),&[4]);
+		assert_eq!(g.delete_edge(6),Ok(()));
+		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
+		assert_eq!(g.delete_edge(1),Ok(()));
+		assert_eq!(g.get_outgoing_vertex(1),&[3]);
 		
 	}
 
+/*
+	#[test]
+	fn test_incoming_connection_info() {
+		let mut g = setup_basic1();
+		assert_eq!(g.get_incoming_connection_info(2,4),None);
+		assert_eq!(g.get_incoming_connection_info(1,4),None);
+
+	}
+*/
 
 }
