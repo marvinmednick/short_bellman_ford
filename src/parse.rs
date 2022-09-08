@@ -5,6 +5,12 @@ use log::{ info, error, debug, /*warn,*/ trace };
 use crate::graphbuilder::GraphBuilder;
 
 
+#[derive(PartialEq)]
+pub enum VertexOrder {
+    SourceFirst,
+    DestFirst,
+}
+
     
 // Format is 1 line per vertex with a tuple consistenting of destination vertex and weight
 // e.g.    
@@ -63,9 +69,8 @@ where F: GraphBuilder,
     }
 }
 
-
-pub fn read_adjacency_single<F: GraphBuilder>
-    ( file: & mut File, mut graph_functions: F ) {
+pub fn read_adjacency_single<F: GraphBuilder, >
+    ( file: & mut File, order: VertexOrder, mut graph_functions: F ) {
 
     //open the file
     let mut reader = BufReader::new(file);
@@ -89,14 +94,19 @@ pub fn read_adjacency_single<F: GraphBuilder>
         if count % 50 == 0 {
             info!("Proccesed {}", count);
         }
-        let line_regex = Regex::new(r"\s*(?P<source>\d+)\s+(?P<dest>\d+)\s+(?P<weight>-?\d+)*$").unwrap();
+        let line_regex = Regex::new(r"\s*(?P<v1>\d+)\s+(?P<v2>\d+)\s+(?P<weight>-?\d+)*$").unwrap();
         trace!("Line is {}",line_data);
         let caps = line_regex.captures(&line_data).unwrap();
         trace!("Caps is {:#?}",caps);
-        let source = caps["source"].parse::<usize>().unwrap(); 
-        let dest = caps["dest"].parse::<usize>().unwrap(); 
+        let vertex1 = caps["v1"].parse::<usize>().unwrap(); 
+        let vertex2 = caps["v1"].parse::<usize>().unwrap(); 
         let weight = caps["weight"].parse::<i64>().unwrap(); 
-        graph_functions.add_edge(source,dest, weight);
+        if order == VertexOrder::SourceFirst {
+            graph_functions.add_edge(vertex1,vertex2, weight);
+        }
+        else {
+            graph_functions.add_edge(vertex2,vertex1, weight);
+        }
     }
 
 }
