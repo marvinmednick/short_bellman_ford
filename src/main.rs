@@ -54,7 +54,7 @@ fn main() {
 
     match &cmd_line.command {
 
-        Some(Commands::Dijkstra { start, display_list }) => {
+        Some(Commands::Dijkstra { start, display_list, show_paths }) => {
             let mut d = Dijkstra::new(*start);
 
             for (id, _v) in g.vertex_iter() {
@@ -65,7 +65,12 @@ fn main() {
                 None => vec!(),
                 Some(x) => x.clone(),
             };
-            d.print_result(list,true);
+            if *show_paths {
+                d.print_paths(g.get_vertexes());
+            }
+            else {
+                d.print_result(list,true);
+            }
 
         },
         Some(Commands::Bellman { start, display_list, show_paths }) => {

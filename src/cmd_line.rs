@@ -48,6 +48,10 @@ pub enum Commands {
         #[clap(short, long, value_parser, use_value_delimiter=true)]
         /// list of vertexes to display
         display_list: Option<Vec<usize>>,
+
+        #[clap(short, long, takes_value=false)]
+        /// displays the path
+        show_paths: bool,
     },
     Bellman {
         #[clap(value_parser)]

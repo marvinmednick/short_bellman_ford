@@ -1,5 +1,5 @@
 extern crate minheap;
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap};
 use minheap::MinHeap;
 
 use crate::dirgraph::DirectedGraph;
@@ -10,7 +10,7 @@ use log::{ info, error, debug, /*warn,*/ trace };
 struct VertexInfo {
     // first entry in the field, so will be used for sorting by min heap by default
     score: i64,
-    associated_vertex: usize
+    associated_vertex: Option<usize>,
 }
 
 
@@ -25,7 +25,7 @@ pub struct Dijkstra {
         processed_vertex : BTreeMap::<usize,VertexInfo>,
         /// If set, vertex X  contains the preceeding vertex in the path from the starting vertex
         /// used to build the path from Start to this vertex
-        preceeding:   HashMap<usize,usize>,
+        predecessor:  BTreeMap<usize,Option<usize>>,
 }
 
 
@@ -36,13 +36,14 @@ impl Dijkstra {
             starting_vertex:  starting_vertex,
             unprocessed_vertex : MinHeap::<VertexInfo>::new(),
             processed_vertex : BTreeMap::<usize,VertexInfo>::new(),
-            preceeding : HashMap::<usize,usize>::new()
+            predecessor : BTreeMap::<usize,Option<usize>>::new()
         }
 
     }
 
     pub fn initialize_vertex(&mut self, vertex_id: usize) {
-        self.unprocessed_vertex.insert(vertex_id,VertexInfo {  score: 100000000, associated_vertex: 0} );
+        self.unprocessed_vertex.insert(vertex_id,VertexInfo {  score: 100000000, associated_vertex: None} );
+        self.predecessor.insert(vertex_id,None);
     }
         
 
@@ -54,8 +55,10 @@ impl Dijkstra {
             let index = starting_index.clone();
             self.unprocessed_vertex.delete(index);
             
-            // setup the initial distance for the starting vertex to 0 (to itself)
-            self.processed_vertex.insert(starting_vertex,VertexInfo { score: 0, associated_vertex: 0 } );
+            // setup the initial distance for the starting vertex to 0 (to itself) and no
+            // associated Vertex
+            self.processed_vertex.insert(starting_vertex,VertexInfo { score: 0, associated_vertex: None } );
+            self.predecessor.insert(starting_vertex,None);
 
             self.update_scoring(graph, starting_vertex);
 
@@ -92,12 +95,14 @@ impl Dijkstra {
             if let Some(cur_info) = self.unprocessed_vertex.peek_id_data(e.dest()) {
                 let new_score = cur_vertex_distance + e.weight();
                 if new_score < cur_info.score {
-                    trace!("Update scoring on {} from {} to {}",e.dest(),cur_info.score,new_score);
+                    trace!("Update scoring on {} from {} to {}, cur_vertex is {} e.source {}",e.dest(),cur_info.score,new_score,cur_vertex, e.source());
                     // get the index of the item id
                     let vertex_index = self.unprocessed_vertex.get_id_index(e.dest()).unwrap().clone();
                     // and update its value
-                    self.unprocessed_vertex.update(vertex_index,VertexInfo { score: new_score, associated_vertex: 0} );
+                    self.unprocessed_vertex.update(vertex_index,VertexInfo { score: new_score, associated_vertex: Some(cur_vertex)} );
+                    self.predecessor.insert(e.dest(),Some(cur_vertex));
                     trace!("Unprocessed: {:?}",self.unprocessed_vertex);
+                    trace!("Predecessors: {:?}",self.predecessor);
                 }
              }       
             
@@ -146,4 +151,54 @@ impl Dijkstra {
     }
 
 
+
+    fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
+
+        info!("Finding path for vertex {}", dest_vertex);
+        let mut vertex_list = Vec::<usize>::new();
+        let mut predecessor_count = 0;
+        // put the destination vertex at the end of the list to match the stanford test cases
+        // (doesn't seem correct to me)
+        vertex_list.push(dest_vertex);
+        
+        // unless this vertex doesn't have a predecessor (indicating no path from starting vertex)
+        // add it to the end of the path
+        if self.predecessor[&dest_vertex] != None || dest_vertex == self.starting_vertex {
+
+            let mut current_vertex = dest_vertex;
+            while self.predecessor[&current_vertex] != None  {
+                predecessor_count += 1;
+                if let Some(preceeding_vertex) = self.predecessor[&current_vertex] {
+                    trace!("Adding Vertex {} to the path", preceeding_vertex);
+                    vertex_list.push(preceeding_vertex.clone());
+                    current_vertex = preceeding_vertex;
+                }
+                else {
+                    error!("Unexpected Value");
+                }
+
+             }
+        }
+        let path : Vec<usize> = vertex_list.into_iter().rev().collect();
+        info!("Path from vertex {} to vertex {} -> {:?}", self.starting_vertex, dest_vertex, path);
+        path
+
+    }
+
+    pub fn print_paths(&self, vertex_list: Vec<usize>) {
+
+        trace!("Predecessors: {:#?}",self.predecessor);
+
+        for v in vertex_list {
+            let path = self.find_path(v);
+
+            let mut first=true;
+            let path_string : String = path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
+
+            print!("{} => path => {}",v,path_string);
+            println!();
+        }
+    }
+
 }
+
