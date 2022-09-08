@@ -55,7 +55,7 @@ fn main() {
     match &cmd_line.command {
 
         Some(Commands::Dijkstra { start, display_list }) => {
-            let mut d = Dijkstra::new();
+            let mut d = Dijkstra::new(*start);
 
             for (id, _v) in g.vertex_iter() {
                 d.initialize_vertex(id.clone());

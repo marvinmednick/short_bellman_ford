@@ -1,25 +1,42 @@
 extern crate minheap;
-use std::collections::{BTreeMap};
+use std::collections::{HashMap, BTreeMap};
 use minheap::MinHeap;
 
 use crate::dirgraph::DirectedGraph;
 
 use log::{ info, error, debug, /*warn,*/ trace };
 
+#[derive(Debug,PartialOrd,PartialEq)]
+struct unprocessed_vertex_info {
+    // first entry in the field, so will be used for sorting by min heap by default
+    score: i64,
+    associated_vertex: usize
+}
+
+
 pub struct Dijkstra {
-        //explored:  HashMap::<usize,bool>,
+        /// Starting vertex for the algoritm
+        starting_vertex:  usize,
+        ///  Unprocessed vertex -- Min Heap based the greedy score for each vertex
+        ///  initially set to a maximum value, and is reduced during processing
         unprocessed_vertex : MinHeap::<i64>,
+        /// Processed Vertexes -- Map of all vertexes already processed, along with there distance
+        /// from the starting vertex
         processed_vertex : BTreeMap::<usize,i64>,
+        /// If set, vertex X  contains the preceeding vertex in the path from the starting vertex
+        /// used to build the path from Start to this vertex
+        preceeding:   HashMap<usize,usize>,
 }
 
 
 impl Dijkstra {
 
-    pub fn new() -> Dijkstra {
+    pub fn new(starting_vertex: usize) -> Dijkstra {
         Dijkstra { 
-            //explored:  HashMap::<usize,bool>::new(),
+            starting_vertex:  starting_vertex,
             unprocessed_vertex : MinHeap::<i64>::new(),
             processed_vertex : BTreeMap::<usize,i64>::new(),
+            preceeding : HashMap::<usize,usize>::new()
         }
 
     }
