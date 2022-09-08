@@ -6,8 +6,8 @@ use crate::dirgraph::DirectedGraph;
 
 use log::{ info, error, debug, /*warn,*/ trace };
 
-#[derive(Debug,PartialOrd,PartialEq)]
-struct unprocessed_vertex_info {
+#[derive(Debug,Clone,PartialOrd,PartialEq)]
+struct VertexInfo {
     // first entry in the field, so will be used for sorting by min heap by default
     score: i64,
     associated_vertex: usize
@@ -19,10 +19,10 @@ pub struct Dijkstra {
         starting_vertex:  usize,
         ///  Unprocessed vertex -- Min Heap based the greedy score for each vertex
         ///  initially set to a maximum value, and is reduced during processing
-        unprocessed_vertex : MinHeap::<i64>,
+        unprocessed_vertex : MinHeap::<VertexInfo>,
         /// Processed Vertexes -- Map of all vertexes already processed, along with there distance
         /// from the starting vertex
-        processed_vertex : BTreeMap::<usize,i64>,
+        processed_vertex : BTreeMap::<usize,VertexInfo>,
         /// If set, vertex X  contains the preceeding vertex in the path from the starting vertex
         /// used to build the path from Start to this vertex
         preceeding:   HashMap<usize,usize>,
@@ -34,15 +34,15 @@ impl Dijkstra {
     pub fn new(starting_vertex: usize) -> Dijkstra {
         Dijkstra { 
             starting_vertex:  starting_vertex,
-            unprocessed_vertex : MinHeap::<i64>::new(),
-            processed_vertex : BTreeMap::<usize,i64>::new(),
+            unprocessed_vertex : MinHeap::<VertexInfo>::new(),
+            processed_vertex : BTreeMap::<usize,VertexInfo>::new(),
             preceeding : HashMap::<usize,usize>::new()
         }
 
     }
 
     pub fn initialize_vertex(&mut self, vertex_id: usize) {
-        self.unprocessed_vertex.insert(vertex_id,100000000);
+        self.unprocessed_vertex.insert(vertex_id,VertexInfo {  score: 100000000, associated_vertex: 0} );
     }
         
 
@@ -55,13 +55,13 @@ impl Dijkstra {
             self.unprocessed_vertex.delete(index);
             
             // setup the initial distance for the starting vertex to 0 (to itself)
-            self.processed_vertex.insert(starting_vertex,0);
+            self.processed_vertex.insert(starting_vertex,VertexInfo { score: 0, associated_vertex: 0 } );
 
             self.update_scoring(graph, starting_vertex);
 
-            while let Some((next_vertex,next_vertex_score)) = self.unprocessed_vertex.get_min_entry() {
-                debug!("Processing vertex {} score: {}",next_vertex,next_vertex_score);
-                self.processed_vertex.insert(next_vertex,next_vertex_score);
+            while let Some((next_vertex,next_vertex_info)) = self.unprocessed_vertex.get_min_entry() {
+                debug!("Processing vertex {} score: {}",next_vertex,next_vertex_info.score);
+                self.processed_vertex.insert(next_vertex,next_vertex_info);
                 self.update_scoring(graph, next_vertex);
             }
          }       
@@ -80,7 +80,8 @@ impl Dijkstra {
         let adj_edges = graph.get_outgoing(cur_vertex);
         
         // get the distance/score of the current vertex as a start
-        let cur_vertex_distance = self.processed_vertex.get(&cur_vertex).unwrap().clone();
+        let cur_vertex_info = self.processed_vertex.get(&cur_vertex).unwrap().clone();
+        let cur_vertex_distance = cur_vertex_info.score;
 
         // update each of this nodes adjancent vertexes, if the new distance
         // is < the current distance
@@ -88,14 +89,14 @@ impl Dijkstra {
             debug!("Dijsktra updating adjacent {:?}",e);
             // if the adjacent vertex is still in the unprocessed list, then 
             // update the scoring, otherwise skip it (since its already in the processed list)
-            if let Some(cur_score) = self.unprocessed_vertex.peek_id_data(e.dest()) {
+            if let Some(cur_info) = self.unprocessed_vertex.peek_id_data(e.dest()) {
                 let new_score = cur_vertex_distance + e.weight();
-                if new_score < cur_score {
-                    trace!("Update scoring on {} from {} to {}",e.dest(),cur_score,new_score);
+                if new_score < cur_info.score {
+                    trace!("Update scoring on {} from {} to {}",e.dest(),cur_info.score,new_score);
                     // get the index of the item id
                     let vertex_index = self.unprocessed_vertex.get_id_index(e.dest()).unwrap().clone();
                     // and update its value
-                    self.unprocessed_vertex.update(vertex_index,new_score);
+                    self.unprocessed_vertex.update(vertex_index,VertexInfo { score: new_score, associated_vertex: 0} );
                     trace!("Unprocessed: {:?}",self.unprocessed_vertex);
                 }
              }       
@@ -104,8 +105,8 @@ impl Dijkstra {
 
     }
 
-    pub fn get_processed(&self,index : &usize) -> i64 {
-        self.processed_vertex[index]
+    pub fn get_processed(&self,index : &usize) -> &VertexInfo {
+        &self.processed_vertex[index]
     }
 
 
@@ -126,20 +127,20 @@ impl Dijkstra {
         }
         else {
             for (v, result) in self.processed_vertex.iter() {
-                Dijkstra::print_vertex_result(*v, *result,short_display);
+                Dijkstra::print_vertex_result(*v, result,short_display);
             }
             println!();
         }
 
     }
 
-    fn print_vertex_result(vertex: usize, result: i64, short: bool) {
+    fn print_vertex_result(vertex: usize, result: &VertexInfo, short: bool) {
 
         if short {
-            print!("{}", result);
+            print!("{}", result.score);
         }
         else {
-            println!("v {} - {}", vertex, result);
+            println!("v {} - {}", vertex, result.score);
         }
 
     }
