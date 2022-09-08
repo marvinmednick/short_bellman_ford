@@ -20,6 +20,9 @@ use crate::dijkstra::Dijkstra;
 mod bellman;
 use crate::bellman::Bellman;
 
+mod johnson;
+use crate::johnson::Johnson;
+
 mod parse;
 use crate::parse::{read_adjacency_multi };
 
@@ -90,6 +93,27 @@ fn main() {
             }
             else {
                 d.print_result(list,true);
+            }
+
+        },
+        Some(Commands::Johnson { display_list, show_paths }) => {
+            let vertex_list = g.get_vertexes();
+            let mut j = Johnson::<'_>::new(&mut g);
+
+            info!("Staring Johnson");
+            j.shortest_paths();
+            let list = match display_list {
+                None => vec!(),
+                Some(x) => x.clone(),
+            };
+            if j.has_negative_cycle() {
+                println!("Negative cycle found...")
+            }
+            if *show_paths {
+                j.print_paths(vertex_list);
+            }
+            else {
+                j.print_result(list,true);
             }
 
         },
