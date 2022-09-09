@@ -93,7 +93,7 @@ impl Bellman {
             info!("Iteration {}",iteration);
             let mut changes_during_iteration = false;
             for (id,_v) in graph.vertex_iter() {
-                let edges = graph.get_incoming(*id);
+                let edges = graph.get_incoming_edges(*id);
 
                 let mut incoming_distances = Vec::<(MinMax<i64>,usize)>::new();
                 for e in edges {

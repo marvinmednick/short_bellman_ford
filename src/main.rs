@@ -124,7 +124,6 @@ fn main() {
             };
             if *show_paths {
                 print_path_results(path_results);
-                // d.print_paths(g.get_vertexes());
             }
             else {
                 print_distance_result(results,list);
@@ -148,7 +147,6 @@ fn main() {
             }
             if *show_paths {
                 print_path_results(path_results);
-//                d.print_paths(g.get_vertexes());
             }
             else {
                 print_distance_result(results,list);
@@ -156,7 +154,7 @@ fn main() {
 
         },
         Some(Commands::Johnson { display_list, show_paths }) => {
-            let vertex_list = g.get_vertexes();
+            let vertex_list = g.get_vertex_ids();
             let mut j = Johnson::<'_>::new(&mut g);
 
             info!("Staring Johnson");
@@ -195,75 +193,10 @@ fn main() {
 }
 
 
-/*
- * the rest of this file sets up unit tests
- * to run these, the command will be:
- * cargo test --package rust-template -- --nocapture
- * Note: 'rust-template' comes from Cargo.toml's 'name' key
- */
-/*
-// use the attribute below for unit tests
  #[cfg(test)]
 mod tests {
     use super::*;
 
-	fn setup_basic1() -> DirectedGraph {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.add_edge(1,2),Some(1));
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.add_edge(2,3),Some(1));
-		assert_eq!(g.add_edge(2,4),Some(2));
-		assert_eq!(g.add_edge(3,4),Some(1));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_outgoing(2),&[3,4]);
-		assert_eq!(g.get_outgoing(3),&[4]);
-		assert_eq!(g.get_outgoing(4),&[]);
-		g
-	} 
-
-    #[test]
-    fn basic() {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.create_vertex(&1),Some(1));
-		assert_eq!(g.create_vertex(&2),Some(2));
-		assert_eq!(g.add_edge(1,2),Some(1));
-		assert_eq!(g.get_vertexes(),vec!(1,2));
-		assert_eq!(g.create_vertex(&3),Some(3));
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.add_edge(2,3),Some(1));
-		assert_eq!(g.get_vertexes(),vec!(1,2,3));
-		assert_eq!(g.add_edge(1,4),Some(3));
-		assert_eq!(g.get_vertexes(),vec!(1,2,3,4));
-		println!("{:?}",g);
-
-    }
-
-	#[test]
-	fn test_add() {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.add_edge(1,2),Some(1));
-		assert_eq!(g.get_outgoing(1),&[2]);
-		assert_eq!(g.get_incoming(2),&[1]);
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_incoming(2),&[1]);
-	}
-
-	#[test]
-	fn test_add_del() {
-		let mut g = setup_basic1();
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.add_edge(1,2),Some(3));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_outgoing(2),&[3,4]);
-		assert_eq!(g.get_outgoing(3),&[4]);
-		assert_eq!(g.delete_edge(1,2),Ok(()));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.delete_edge(1,2),Ok(()));
-		assert_eq!(g.get_outgoing(1),&[3]);
-		
-	}
 
 
 }
-*/

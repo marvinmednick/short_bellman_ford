@@ -81,7 +81,7 @@ impl Dijkstra {
         debug!("Dijsktra scoring for vertex {}",cur_vertex);
 
         // get the list of edge that are outgoing from the current vertex
-        let adj_edges = graph.get_outgoing(cur_vertex);
+        let adj_edges = graph.get_outgoing_edges(cur_vertex);
         
         // get the distance/score of the current vertex as a start
         let cur_vertex_info = self.processed_vertex.get(&cur_vertex).unwrap().clone();

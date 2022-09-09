@@ -35,7 +35,7 @@ impl<'a> Johnson<'a> {
         }
         else {
             // add the edges to create connections between 0 and all other vertexes
-            for v in graph.get_vertexes() {
+            for v in graph.get_vertex_ids() {
                 graph.add_edge(0,v,0);
             }
         }
@@ -64,6 +64,17 @@ impl<'a> Johnson<'a> {
 
         info!("Staring Bellman");
         self.adjustments.calculate_shortest_paths(self.graph, 0);
+        // get the results of the bellman by vertex...  (need to change the way results are
+        // reported)
+
+
+        // creat a new graph with edges based on adjustment values.
+        //
+        //
+        //
+        // Run dijkstra on this graph n times
+        //
+        // Done... and report results
 
     }
 
@@ -194,26 +205,24 @@ impl<'a> Johnson<'a> {
 mod tests {
     use super::*;
 
-	fn setup_basic1() -> Johnson {
+	fn setup_basic() -> Johnson<'static> {
 		let mut g = DirectedGraph::new();
 		assert_eq!(g.add_edge(1,2),Some(1));
 		assert_eq!(g.add_edge(1,3),Some(2));
 		assert_eq!(g.add_edge(2,3),Some(1));
 		assert_eq!(g.add_edge(2,4),Some(2));
 		assert_eq!(g.add_edge(3,4),Some(1));
-		assert_eq!(g.get_outgoing(1),&[2,3]);
-		assert_eq!(g.get_outgoing(2),&[3,4]);
-		assert_eq!(g.get_outgoing(3),&[4]);
-		assert_eq!(g.get_outgoing(4),&[]);
-        j = Johnson::new(&mut g);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3]);
+		assert_eq!(g.get_outgoing_vertex_ids(2),&[3,4]);
+		assert_eq!(g.get_outgoing_vertex_ids(3),&[4]);
+		assert_eq!(g.get_outgoing_vertex_ids(4),&[]);
+        Johnson::new(&mut g)
 	} 
 
     #[test]
     fn basic() {
         let j = setup_basic(); 
-        println!(":#?",j);
-
-
+        println!("{:#?}",j);
     }
 
 }

@@ -79,41 +79,41 @@ impl Vertex {
         writeln!(f, "Vertex {}", self.vertex_id)
     }
 	
-	pub fn add_outgoing(&mut self, edge_id: usize) {
+	pub fn add_outgoing_edge_id(&mut self, edge_id: usize) {
         trace!("Adding outgoing edge {} to vertex {}",edge_id, self.vertex_id);
         if !self.outgoing.insert(edge_id) {
-           error!("add_outgoing: Vertex {} - outgoing edge {} already exists",edge_id, self.vertex_id)
+           error!("add_outgoing_edge_id: Vertex {} - outgoing edge {} already exists",edge_id, self.vertex_id)
         }
 	}
 
-	pub fn delete_outgoing (&mut self, edge_id: usize) {
+	pub fn delete_outgoing_edge_id (&mut self, edge_id: usize) {
         if !self.outgoing.remove(&edge_id) {
-           error!("delete_outgoing:  Vertex {} - outgoing edge {} doesn't exist",self.vertex_id,edge_id)
+           error!("delete_outgoing_edge_id:  Vertex {} - outgoing edge {} doesn't exist",self.vertex_id,edge_id)
         }
 	}
 
-	pub fn add_incoming(&mut self, edge_id: usize) {
+	pub fn add_incoming_edge_id(&mut self, edge_id: usize) {
         trace!("Adding incoming edge {} to vertex {}",edge_id,self.vertex_id);
         if !self.incoming.insert(edge_id) {
            error!("add_incoming: Vertex {} - outgoing edge {} already exists",self.vertex_id,edge_id)
         }
 	}
 
-	pub fn delete_incoming (&mut self, edge_id: usize) {
+	pub fn delete_incoming_edge_id (&mut self, edge_id: usize) {
         if !self.incoming.remove(&edge_id) {
-           error!("delete_incoming:  Vertex {} - outgoing edge {} doesn't exist",self.vertex_id,edge_id)
+           error!("delete_incoming_edge_id:  Vertex {} - outgoing edge {} doesn't exist",self.vertex_id,edge_id)
         }
 	
 	}
 
     /// Gets a vector of the incoming edge Ids
-    pub fn get_outgoing_edges(&self)  -> Vec<usize>{
+    pub fn get_outgoing_edge_ids(&self)  -> Vec<usize>{
         // get the list of outgoing edges and map them to the dest vertex
 		self.outgoing.iter().cloned().collect()
     }
 
     /// Gets a vector of the outgoing edge Ids
-    pub fn get_incoming_edges(&self)  -> Vec<usize>{
+    pub fn get_incoming_edge_ids(&self)  -> Vec<usize>{
         // get the list of outgoing edges and map them to the dest vertex
 		self.incoming.iter().cloned().collect()
     }
@@ -149,11 +149,11 @@ impl GraphBuilder for &mut DirectedGraph {
 
             // add the edge to the first vertex's adjacency outgoing list
             let vert1 = v_map.get_mut(&v1).unwrap();
-            vert1.add_outgoing(edge_id);
+            vert1.add_outgoing_edge_id(edge_id);
 
             // add the edge to the second vertex adjacency incoming list
             let vert2 = v_map.get_mut(&v2).unwrap();
-            vert2.add_incoming(edge_id);
+            vert2.add_incoming_edge_id(edge_id);
             Some(edge_id)
         }
         else {
@@ -212,24 +212,24 @@ impl DirectedGraph {
 
 
     
-	pub fn get_outgoing(&self, vertex: usize) -> Vec<Edge>{
+	pub fn get_outgoing_edges(&self, vertex: usize) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
         // by mapping each id to its dest element
         // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
         // returns 'None' ; this shouldn't occur, and will crash here if it did
-		v.get_outgoing_edges().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
+		v.get_outgoing_edge_ids().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
 		
 	}
 
     /// retreives a vector of outogoing vertex_id from a given vertex
-	pub fn get_outgoing_vertex(&self, vertex: usize) -> Vec<usize>{
+	pub fn get_outgoing_vertex_ids(&self, vertex: usize) -> Vec<usize>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of vertexe that this vertex has outgoing edges to (i.e vertexes that )accessible from this vertex)
         // by mapping each id to its dest element
         // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
         // returns 'None' ; this shouldn't occur, and will crash here if it did
-		v.get_outgoing_edges()
+		v.get_outgoing_edge_ids()
             .iter()
             .map(|x| {let e = self.edge_map.get(&x).unwrap(); e.dest }
             .clone())
@@ -239,28 +239,28 @@ impl DirectedGraph {
 
 	pub fn get_outgoing_edge_ids(&self, vertex: usize) -> Vec<usize>{
 		let v = self.vertex_map.get(&vertex).unwrap();
-		v.get_outgoing_edges()
+		v.get_outgoing_edge_ids()
     }
 
     /// retreives a vector of incoming edges to a given vertex
-	pub fn get_incoming(&self, vertex: usize) -> Vec<Edge>{
+	pub fn get_incoming_edges(&self, vertex: usize) -> Vec<Edge>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of outgoing edges
         // by mapping each id to its dest element
         // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
         // returns 'None' ; this shouldn't occur, and will crash here if it did
-		v.get_incoming_edges().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
+		v.get_incoming_edge_ids().iter().map(|x| self.edge_map.get(&x).unwrap().clone()).collect()
 		
 	}
 
     /// retreives a vector of incoming vertex_id from a given vertex
-	pub fn get_incoming_vertex(&self, vertex: usize) -> Vec<usize>{
+	pub fn get_incoming_vertex_ids(&self, vertex: usize) -> Vec<usize>{
 		let v = self.vertex_map.get(&vertex).unwrap();
         // get the list of vertexes that have edges incoming to this vertex 
         // by mapping each id to its dest element
         // NOTE: since edge list is coming from the vertex, this isn't handling the case where edge_map.get
         // returns 'None' ; this shouldn't occur, and will crash here if it did
-		v.get_incoming_edges()
+		v.get_incoming_edge_ids()
             .iter()
             .map(|x| {let e = self.edge_map.get(&x).unwrap(); e.source }
             .clone())
@@ -268,9 +268,9 @@ impl DirectedGraph {
 	}
 
 
-	pub fn get_incoming_edges(&self, vertex: usize) -> Vec<usize>{
+	pub fn get_incoming_edge_ids(&self, vertex: usize) -> Vec<usize>{
 		let v = self.vertex_map.get(&vertex).unwrap();
-		v.get_incoming_edges()
+		v.get_incoming_edge_ids()
     }
 
     /// return the weight of the incoming connection from a given ource vertex (if it existss) or
@@ -279,7 +279,7 @@ impl DirectedGraph {
     pub fn get_incoming_connection_weight(&self, source: usize, vertex: usize) -> Option<i64> {
 		let v = self.vertex_map.get(&vertex).unwrap();
 
-		let find_result = v.get_incoming_edges()
+		let find_result = v.get_incoming_edge_ids()
             .iter()
             .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.source.clone(), edge.weight.clone()) })
             .find(|e| { e.0 == source } );
@@ -298,7 +298,7 @@ impl DirectedGraph {
     pub fn get_outgoing_connection_weight(&self, vertex: usize, dest: usize) -> Option<i64> {
 		let v = self.vertex_map.get(&vertex).unwrap();
 
-		let find_result = v.get_outgoing_edges()
+		let find_result = v.get_outgoing_edge_ids()
             .iter()
             .map(|x| { let edge = self.edge_map.get(&x).unwrap(); (edge.dest.clone(), edge.weight.clone()) })
             .find(|e| { e.0 == dest } );
@@ -311,12 +311,25 @@ impl DirectedGraph {
     }
 
 
+    /// get an iterator to all of the vertexes in the graph
     pub fn vertex_iter(&self) -> std::collections::btree_map::Iter<'_, usize, Vertex> {
         self.vertex_map.iter()
     }
 
-	pub fn get_vertexes(&self) -> Vec<usize> {
+    /// get an iterator to all of the edges in the graph
+    pub fn edge_iter(&self) -> std::collections::btree_map::Iter<'_, usize, Edge> {
+        self.edge_map.iter()
+    }
+
+
+    /// get a complete list of vertex ids in the graph
+	pub fn get_vertex_ids(&self) -> Vec<usize> {
 		self.vertex_map.keys().cloned().collect()
+	}
+
+    /// get a complete list of edge ids in the graph
+	pub fn get_edge_ids(&self) -> Vec<usize> {
+		self.edge_map.keys().cloned().collect()
 	}
 
 	pub fn print_vertexes(&self) {
@@ -341,8 +354,8 @@ impl DirectedGraph {
 	pub fn delete_edge(&mut self,edge_id: usize) -> Result<(),String>  {
 	
         if let Some(edge) = self.edge_map.get(&edge_id) {
-            self.vertex_map.get_mut(&edge.source).unwrap().delete_outgoing(edge_id)	;
-            self.vertex_map.get_mut(&edge.dest).unwrap().delete_incoming(edge_id);
+            self.vertex_map.get_mut(&edge.source).unwrap().delete_outgoing_edge_id(edge_id)	;
+            self.vertex_map.get_mut(&edge.dest).unwrap().delete_incoming_edge_id(edge_id);
             self.edge_map.remove(&edge_id);
             Ok(())
         }
@@ -420,10 +433,10 @@ mod tests {
 		assert_eq!(g.add_edge(2,3,1),Some(3));
 		assert_eq!(g.add_edge(2,4,22),Some(4));
 		assert_eq!(g.add_edge(3,4,33),Some(5));
-		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
-		assert_eq!(g.get_outgoing_vertex(2),&[3,4]);
-		assert_eq!(g.get_outgoing_vertex(3),&[4]);
-		assert_eq!(g.get_outgoing_vertex(4),&[]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3]);
+		assert_eq!(g.get_outgoing_vertex_ids(2),&[3,4]);
+		assert_eq!(g.get_outgoing_vertex_ids(3),&[4]);
+		assert_eq!(g.get_outgoing_vertex_ids(4),&[]);
 		graph
 	} 
 
@@ -434,13 +447,13 @@ mod tests {
 		assert_eq!(g.define_vertex(1),Some(1));
 		assert_eq!(g.define_vertex(2),Some(2));
 		assert_eq!(g.add_edge(1,2,1),Some(1));
-		assert_eq!(g.get_vertexes(),vec!(1,2));
+		assert_eq!(g.get_vertex_ids(),vec!(1,2));
 		assert_eq!(g.define_vertex(3),Some(3));
 		assert_eq!(g.add_edge(1,3,1),Some(2));
 		assert_eq!(g.add_edge(2,3,1),Some(3));
-		assert_eq!(g.get_vertexes(),vec!(1,2,3));
+		assert_eq!(g.get_vertex_ids(),vec!(1,2,3));
 		assert_eq!(g.add_edge(1,4,1),Some(4));
-		assert_eq!(g.get_vertexes(),vec!(1,2,3,4));
+		assert_eq!(g.get_vertex_ids(),vec!(1,2,3,4));
 //		println!("{:?}",g);
 
     }
@@ -452,27 +465,27 @@ mod tests {
         let mut g = &mut graph;
 		assert_eq!(g.add_edge(1,2,1),Some(1));
 //		println!("{:#?}",g);
-		assert_eq!(g.get_outgoing_vertex(1),&[2]);
-		assert_eq!(g.get_incoming_vertex(2),&[1]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2]);
+		assert_eq!(g.get_incoming_vertex_ids(2),&[1]);
 		assert_eq!(g.add_edge(1,3,1),Some(2));
-		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
-		assert_eq!(g.get_incoming_vertex(2),&[1]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3]);
+		assert_eq!(g.get_incoming_vertex_ids(2),&[1]);
 	}
 
 	#[test]
 	fn test_add_del() {
 		let mut graph = setup_basic1();
         let mut g = &mut graph;
-		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3]);
 		assert_eq!(g.add_edge(1,2,1),Some(6));
 //		println!("{:#?}",g);
-		assert_eq!(g.get_outgoing_vertex(1),&[2,3,2]);
-		assert_eq!(g.get_outgoing_vertex(2),&[3,4]);
-		assert_eq!(g.get_outgoing_vertex(3),&[4]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3,2]);
+		assert_eq!(g.get_outgoing_vertex_ids(2),&[3,4]);
+		assert_eq!(g.get_outgoing_vertex_ids(3),&[4]);
 		assert_eq!(g.delete_edge(6),Ok(()));
-		assert_eq!(g.get_outgoing_vertex(1),&[2,3]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3]);
 		assert_eq!(g.delete_edge(1),Ok(()));
-		assert_eq!(g.get_outgoing_vertex(1),&[3]);
+		assert_eq!(g.get_outgoing_vertex_ids(1),&[3]);
 		
 	}
 
