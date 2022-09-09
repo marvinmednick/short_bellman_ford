@@ -145,7 +145,7 @@ impl Dijkstra {
     }
 
 
-
+/*
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
         if display_list.len() > 0 {
@@ -183,7 +183,7 @@ impl Dijkstra {
 
     }
 
-
+*/
 
     fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
 
@@ -218,6 +218,18 @@ impl Dijkstra {
 
     }
 
+    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> Vec<(usize, Vec<usize>,bool)> {
+        let mut result = Vec::<(usize,Vec<usize>,bool)>::new();
+        for v in vertex_list {
+            let path = self.find_path(v);
+            let has_cycle = false;
+            result.push((v,path,has_cycle));
+            
+        }
+        result
+
+    }
+    /*
     pub fn print_paths(&self, vertex_list: Vec<usize>) {
 
         trace!("Predecessors: {:#?}",self.predecessor);
@@ -233,5 +245,6 @@ impl Dijkstra {
         }
     }
 
+    */
 }
 

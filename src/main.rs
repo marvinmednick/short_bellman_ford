@@ -116,12 +116,15 @@ fn main() {
             }
             d.calculate_shortest_paths(&g, *start);
             let results = d.get_shortest_path_distances();
+            let vertex_list = (1..=g.vertex_count()).collect();
+            let path_results = d.get_shortest_paths(vertex_list);
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
             };
             if *show_paths {
-                d.print_paths(g.get_vertexes());
+                print_path_results(path_results);
+                // d.print_paths(g.get_vertexes());
             }
             else {
                 print_distance_result(results,list);

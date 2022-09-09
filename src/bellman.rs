@@ -199,7 +199,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-
+/*
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
 
@@ -245,7 +245,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-
+*/
     fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
 
         info!("Finding path for vertex {}", dest_vertex);
@@ -295,6 +295,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
+    /*
     pub fn print_paths(&self, vertex_list: Vec<usize>) {
 
         for v in vertex_list {
@@ -311,5 +312,6 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
             println!();
         }
     }
+    */
 
 }
