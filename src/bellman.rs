@@ -168,10 +168,6 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
         }
 
-        for v in self.predecessor.keys() {
-            self.find_path(starting_vertex, *v);
-        }
-
     }
 
     pub fn has_negative_cycle(&self) -> bool {
@@ -250,7 +246,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
     }
 
 
-    fn find_path(&self,starting_vertex: usize, dest_vertex: usize) -> Vec<usize>{
+    fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
 
         info!("Finding path for vertex {}", dest_vertex);
         let mut vertex_list = Vec::<usize>::new();
@@ -282,15 +278,27 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
              }
         }
         let path : Vec<usize> = vertex_list.into_iter().rev().collect();
-        info!("Path from vertex {} to vertex {} -> {:?}", starting_vertex, dest_vertex, path);
+        info!("Path from vertex {} to vertex {} -> {:?}", self.starting_vertex, dest_vertex, path);
         path
+
+    }
+
+    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> Vec<(usize, Vec<usize>,bool)> {
+        let mut result = Vec::<(usize,Vec<usize>,bool)>::new();
+        for v in vertex_list {
+            let path = self.find_path(v);
+            let has_cycle = path.len() > self.num_vertex;
+            result.push((v,path,has_cycle));
+            
+        }
+        result
 
     }
 
     pub fn print_paths(&self, vertex_list: Vec<usize>) {
 
         for v in vertex_list {
-            let path = self.find_path(self.starting_vertex, v);
+            let path = self.find_path(v);
             let has_cycle = path.len() > self.num_vertex;
 
             let mut first=true;

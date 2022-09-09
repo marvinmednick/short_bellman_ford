@@ -57,6 +57,26 @@ fn print_distance_result(results: Vec<MinMax<i64>>, display_list: Vec<usize>) {
 
 }
 
+
+
+pub fn print_path_results(path_results: Vec<(usize,Vec<usize>,bool)> ) {
+
+    let num_entries = path_results.len().clone();
+    for (starting_vertex, path, has_cycle) in path_results {
+
+
+        info!("Printing path results for {} items",num_entries);
+        let mut first=true;
+        let path_string : String = path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
+
+        print!("{} => path => {}",starting_vertex,path_string);
+        if has_cycle {
+            print!("... (has cycle)");
+        }
+        println!();
+    }
+}
+
 fn main() {
 
     env_logger::init();
@@ -114,6 +134,8 @@ fn main() {
             info!("Staring Bellman");
             d.calculate_shortest_paths(&g, *start);
             let results = d.get_shortest_path_distances();
+            let vertex_list = (1..=g.vertex_count()).collect();
+            let path_results = d.get_shortest_paths(vertex_list);
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
@@ -122,7 +144,8 @@ fn main() {
                 println!("Negative cycle found...")
             }
             if *show_paths {
-                d.print_paths(g.get_vertexes());
+                print_path_results(path_results);
+//                d.print_paths(g.get_vertexes());
             }
             else {
                 print_distance_result(results,list);
