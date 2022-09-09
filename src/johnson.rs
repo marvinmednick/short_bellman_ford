@@ -1,15 +1,15 @@
 extern crate two_d_array;
-use std::collections::{BTreeMap};
+//use std::collections::{BTreeMap};
 use two_d_array::TwoDArray;
 
 use crate::dirgraph::DirectedGraph;
 use crate::graphbuilder::GraphBuilder;
 
-use log::{ info, error, debug, warn,trace };
+use log::{ info, error, /* debug ,*/ warn, /* trace*/ };
 
-use std::fmt;
+// use std::fmt;
 use crate::bellman::{Bellman,MinMax};
-use crate::bellman::MinMax::{Value,NA};
+//use crate::bellman::MinMax::{Value,NA};
 
 
 pub struct Johnson<'a> {
@@ -43,7 +43,7 @@ impl<'a> Johnson<'a> {
 
         let num_vertex = graph.vertex_count();
 
-        let mut adjustment_info = Bellman::new(num_vertex.clone());
+        let adjustment_info = Bellman::new(num_vertex.clone());
 
         Johnson {
             graph    : graph,
@@ -57,13 +57,13 @@ impl<'a> Johnson<'a> {
     }
 
     /// Find all shortest path from each vertex to all other vertes
-    pub fn shortest_paths(&mut self) {
+    pub fn calculate_shortest_paths(&mut self) {
         info!("Starting all shortest path analysis with Johnson algorithm");
         self.found_negative_cycle = false;
 
 
         info!("Staring Bellman");
-        self.adjustments.shortest_paths(self.graph, 0);
+        self.adjustments.calculate_shortest_paths(self.graph, 0);
 
     }
 

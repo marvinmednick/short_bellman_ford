@@ -78,7 +78,7 @@ impl Bellman {
     }
 
     /// Find the shortest path from a starting vertex to all other vertexes in the graph
-    pub fn shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
+    pub fn calculate_shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
         info!("Starting shortest path with {}",starting_vertex);
         self.found_negative_cycle = false;
 
@@ -177,8 +177,33 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
     pub fn has_negative_cycle(&self) -> bool {
         self.found_negative_cycle
     }
-    
+   
+    /// Returns the shortest disntance calcuated from the starting vertex previously defined
+    /// to the dest_vertex provided. 
+    /// Returns NA if the dest_vertex is out of rant
+    pub fn get_shortest_path_distance (&self,dest_vertex: usize ) -> MinMax<i64> {
+        if dest_vertex < self.num_vertex {
+            self.distances.get(dest_vertex, self.last_iteration).unwrap()
+        }
+        else {
+            MinMax::NA
+        }
+    }
         
+    /// Returns the a list of all the hortest disntance calcuated from the starting vertex
+    /// to each of the rest of the vertexes 
+    pub fn get_shortest_path_distances(&self) -> Vec<MinMax<i64>> {
+
+        let mut result_list = Vec::<MinMax<i64>>::new();
+        for result in self.distances.get_row(self.last_iteration) {
+            result_list.push(result.clone());
+        }
+
+        result_list
+
+    }
+
+
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
 

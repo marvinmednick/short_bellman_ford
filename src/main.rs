@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::fs::File;
-use log::{  info ,/* error, */ debug, /*warn, trace */};
+use log::{  info , error, debug, /*warn, */trace };
 
 use clap::Parser;
 
@@ -18,13 +18,44 @@ mod dijkstra;
 use crate::dijkstra::Dijkstra;
 
 mod bellman;
-use crate::bellman::Bellman;
+use crate::bellman::{Bellman,MinMax};
 
 mod johnson;
 use crate::johnson::Johnson;
 
 mod parse;
 use crate::parse::{read_adjacency_multi };
+
+fn print_distance_result(results: Vec<MinMax<i64>>, display_list: Vec<usize>) {
+
+
+//    trace!("Results {:?}",results);
+//    for i in 0..10 {
+////        trace!("Results {} -> {}",i,results[i]);
+ //   }
+    let disp_list_len = display_list.len().clone();
+    let mut list_of_vertexes =  display_list;
+    if disp_list_len == 0 {
+        list_of_vertexes = (0..results.len()).collect();
+    }
+
+    let mut is_first = true;
+    for v in list_of_vertexes {
+        trace!("Checking {}, result {}",v,results[v]);
+        if v < results.len() {
+           if !is_first {
+               print!(",");
+            }
+            print!("{}", results[v]);
+            is_first = false;
+        }
+        else {
+            error!("Dest Vertex {} is invalid",v);
+        }
+    }
+    println!();
+
+}
 
 fn main() {
 
@@ -63,7 +94,8 @@ fn main() {
             for (id, _v) in g.vertex_iter() {
                 d.initialize_vertex(id.clone());
             }
-            d.shortest_paths(&g, *start);
+            d.calculate_shortest_paths(&g, *start);
+            let results = d.get_shortest_path_distances();
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
@@ -72,7 +104,7 @@ fn main() {
                 d.print_paths(g.get_vertexes());
             }
             else {
-                d.print_result(list,true);
+                print_distance_result(results,list);
             }
 
         },
@@ -80,7 +112,8 @@ fn main() {
             let mut d = Bellman::new(g.vertex_count());
 
             info!("Staring Bellman");
-            d.shortest_paths(&g, *start);
+            d.calculate_shortest_paths(&g, *start);
+            let results = d.get_shortest_path_distances();
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
@@ -92,7 +125,7 @@ fn main() {
                 d.print_paths(g.get_vertexes());
             }
             else {
-                d.print_result(list,true);
+                print_distance_result(results,list);
             }
 
         },
@@ -101,7 +134,7 @@ fn main() {
             let mut j = Johnson::<'_>::new(&mut g);
 
             info!("Staring Johnson");
-            j.shortest_paths();
+            j.calculate_shortest_paths();
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),

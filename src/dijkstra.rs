@@ -5,6 +5,7 @@ use minheap::MinHeap;
 use crate::dirgraph::DirectedGraph;
 
 use log::{ info, error, debug, /*warn,*/ trace };
+use crate::bellman::{MinMax,MinMax::Value,MinMax::NA};
 
 #[derive(Debug,Clone,PartialOrd,PartialEq)]
 struct VertexInfo {
@@ -47,7 +48,7 @@ impl Dijkstra {
     }
         
 
-    pub fn shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
+    pub fn calculate_shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
         info!("Starting shortest path with {}",starting_vertex);
 
         if let Some(starting_index) = self.unprocessed_vertex.get_id_index(starting_vertex) {
@@ -115,6 +116,36 @@ impl Dijkstra {
     }
 
 
+    /// Returns the shortest disntance calcuated from the starting vertex previously defined
+    /// to the dest_vertex provided. 
+    /// Returns NA if the dest_vertex is out of rant
+    pub fn get_shortest_path_distance (&self,dest_vertex: usize ) -> MinMax<i64> {
+        if self.processed_vertex.contains_key(&dest_vertex) {
+            Value(self.get_processed(&dest_vertex).score.clone())
+        }
+        else {
+            NA
+        }
+    }
+        
+    /// Returns the a list of all the hortest disntance calcuated from the starting vertex
+    /// to each of the rest of the vertexes 
+    pub fn get_shortest_path_distances(&self) -> Vec<MinMax<i64>> {
+
+        let mut result_list = Vec::<MinMax<i64>>::new();
+        // add vertex 0 since it not define  (TODO -- cleanup vertex numbering and naming)
+        result_list.push(MinMax::Max);
+        for (v, result) in self.processed_vertex.iter() {
+            trace!("getsp_dist: v {} result {:?}",v,result);
+            result_list.push(Value(result.score.clone()));
+        }
+
+        result_list
+
+    }
+
+
+
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
         let mut is_first = true;
         if display_list.len() > 0 {
@@ -131,7 +162,9 @@ impl Dijkstra {
 
         }
         else {
+            let mut is_first = true;
             for (v, result) in self.processed_vertex.iter() {
+                if is_first { is_first = false; } else { print!(","); }
                 Dijkstra::print_vertex_result(*v, result,short_display);
             }
             println!();
