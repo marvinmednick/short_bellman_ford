@@ -199,53 +199,6 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-/*
-    pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
-        let mut is_first = true;
-
-        if display_list.len() > 0 {
-            for v in display_list {
-                if v < self.num_vertex {
-                   if !is_first {
-                       print!(",");
-                    }
-                   is_first = false;
-                   Bellman::print_vertex_result(v, self.distances.get(v,self.last_iteration).unwrap(),short_display);
-                }
-                else {
-                    error!("Dest Vertex {} is invalid",v);
-                }
-            }
-            println!();
-
-        }
-        else {
-            let mut index = 0;
-            for result in self.distances.get_row(self.last_iteration) {
-               if !is_first {
-                   print!(",");
-                }
-               is_first = false;
-               Bellman::print_vertex_result(index, *result, short_display);
-               index += 1;
-            } 
-            println!();
-        }
-
-    }
-
-    fn print_vertex_result(vertex: usize, result: MinMax<i64>, short: bool) {
-
-        if short {
-            print!("{}", result);
-        }
-        else {
-            println!("v {} - {}", vertex, result);
-        }
-
-    }
-
-*/
     fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
 
         info!("Finding path for vertex {}", dest_vertex);
@@ -295,23 +248,5 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-    /*
-    pub fn print_paths(&self, vertex_list: Vec<usize>) {
-
-        for v in vertex_list {
-            let path = self.find_path(v);
-            let has_cycle = path.len() > self.num_vertex;
-
-            let mut first=true;
-            let path_string : String = path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
-
-            print!("{} => path => {}",v,path_string);
-            if has_cycle {
-                print!("... (has cycle)");
-            }
-            println!();
-        }
-    }
-    */
 
 }

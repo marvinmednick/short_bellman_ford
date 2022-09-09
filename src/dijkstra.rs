@@ -145,45 +145,6 @@ impl Dijkstra {
     }
 
 
-/*
-    pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
-        let mut is_first = true;
-        if display_list.len() > 0 {
-            for v in display_list {
-                if is_first { is_first = false; } else { print!(","); }
-                if self.processed_vertex.contains_key(&v) {
-                    Dijkstra::print_vertex_result(v, self.get_processed(&v),short_display);
-                }
-                else {
-                    error!("Dest Vertex {} is invalid",v);
-                }
-            }
-            println!();
-
-        }
-        else {
-            let mut is_first = true;
-            for (v, result) in self.processed_vertex.iter() {
-                if is_first { is_first = false; } else { print!(","); }
-                Dijkstra::print_vertex_result(*v, result,short_display);
-            }
-            println!();
-        }
-
-    }
-
-    fn print_vertex_result(vertex: usize, result: &VertexInfo, short: bool) {
-
-        if short {
-            print!("{}", result.score);
-        }
-        else {
-            println!("v {} - {}", vertex, result.score);
-        }
-
-    }
-
-*/
 
     fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
 
@@ -229,22 +190,5 @@ impl Dijkstra {
         result
 
     }
-    /*
-    pub fn print_paths(&self, vertex_list: Vec<usize>) {
-
-        trace!("Predecessors: {:#?}",self.predecessor);
-
-        for v in vertex_list {
-            let path = self.find_path(v);
-
-            let mut first=true;
-            let path_string : String = path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
-
-            print!("{} => path => {}",v,path_string);
-            println!();
-        }
-    }
-
-    */
 }
 
