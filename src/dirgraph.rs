@@ -196,17 +196,17 @@ impl DirectedGraph {
     }
 
 	pub fn define_edge(&mut self, source: usize, dest: usize, weight: i64 ) -> Option<usize> {
-        if source != 0 && dest != 0 {
+    //    if source != 0 && dest != 0 {
             let edge_id = self.next_edge_id.clone();
             self.next_edge_id += 1;
 			let e = Edge::new(edge_id, source, dest, weight);
 			self.edge_map.insert(edge_id,e);
             Some(edge_id)
-        }
-        else {
-            warn!("Invalid edge input 0  source {} dest {} weight {}", source, dest, weight);
-            None
-        }
+     //   }
+      //  else {
+       //     warn!("Invalid edge input 0  source {} dest {} weight {}", source, dest, weight);
+        //    None
+        //}
 	}
 
 

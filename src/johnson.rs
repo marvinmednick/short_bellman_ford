@@ -9,6 +9,8 @@ use log::{ info, error, debug ,warn, /* trace*/ };
 
 // use std::fmt;
 use crate::bellman::{Bellman,MinMax};
+use crate::dijkstra::Dijkstra;
+
 use crate::bellman::MinMax::{Value};
 
 #[derive(Debug)]
@@ -19,6 +21,7 @@ pub struct Johnson<'a> {
         shortest_path_length: TwoDArray<MinMax<usize>>,
         found_negative_cycle : bool,
         num_vertex: usize
+
 }
 
 
@@ -63,22 +66,44 @@ impl<'a> Johnson<'a> {
 
 
         info!("Staring Bellman");
-        self.adjustments.calculate_shortest_paths(self.graph, 1);
+        self.adjustments.calculate_shortest_paths(self.graph, 0);
         let adjustment_results = self.adjustments.get_shortest_path_distances();
         info!("Adjustment results {:?}",adjustment_results);
 
+        // create the graph with the adjusted edge weights cacluated as preveious edge +
+        // source_vertex adjustment - dest_vertext adjustment
+        // skip vertex 0 since we added that to ensure that there a connected graph from the
+        // starting vertex 
         for (id, edge) in self.graph.edge_iter() {
-            if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[edge.source()], adjustment_results[edge.dest()]) {
-                let adj_weight =  edge.weight() + source_adj - dest_adj;
-                (&mut self.g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
-            }
-            else {
-                error!("Non value adjustment values");
+            if edge.source() != 0 {
+                if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[edge.source()], adjustment_results[edge.dest()]) {
+                    let adj_weight =  edge.weight() + source_adj - dest_adj;
+                    (&mut self.g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
+                }
+                else {
+                    error!("Non numeric adjustment values source: {} dest {} source adj: {} dest adj {}",
+                           edge.source(),
+                           edge.dest(),
+                           adjustment_results[edge.source()],
+                           adjustment_results[edge.dest()]
+                        );
+                }
             }
             
 
         }
         debug!("g_prime {:#?}",self.g_prime);
+
+
+        for start in 1..self.num_vertex {
+            let mut d = Dijkstra::new(start);
+
+            for (id, _v) in self.g_prime.vertex_iter() {
+                d.initialize_vertex(id.clone());
+            }
+            d.calculate_shortest_paths(&self.g_prime, start);
+            let results = d.get_shortest_path_distances();
+        }
         // get the results of the bellman by vertex...  (need to change the way results are
         // reported)
 
@@ -221,6 +246,11 @@ mod tests {
     use crate::dirgraph::DirectedGraph;
     use crate::graphbuilder::GraphBuilder;
     use crate::Johnson;
+    use log::{  info , /*error, debug, warn, trace */ };
+
+    fn init() {
+        env_logger::init();
+    }
 
 	fn setup_basic(mut g :&mut DirectedGraph) { 
 		assert_eq!(g.add_edge(1,2,12),Some(1));
@@ -237,8 +267,10 @@ mod tests {
 
     #[test]
     fn basic() {
+        init();
 		let mut g = DirectedGraph::new();
         setup_basic(&mut g); 
+        info!("basic Setup complete");
         let mut j = Johnson::<'_>::new(&mut g);
         j.calculate_shortest_paths();
     }
