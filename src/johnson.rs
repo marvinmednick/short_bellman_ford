@@ -1,5 +1,5 @@
 extern crate two_d_array;
-//use std::collections::{BTreeMap};
+use std::collections::{BTreeMap};
 use two_d_array::TwoDArray;
 
 use crate::dirgraph::DirectedGraph;
@@ -18,7 +18,7 @@ pub struct Johnson<'a> {
         graph : &'a mut DirectedGraph,
         g_prime: DirectedGraph,
         adjustments:  Bellman,
-        shortest_path_length: TwoDArray<MinMax<usize>>,
+        shortest_path_lengths:  BTreeMap::<usize,BTreeMap::<usize,MinMax<i64>>>,
         found_negative_cycle : bool,
         num_vertex: usize
 
@@ -52,7 +52,7 @@ impl<'a> Johnson<'a> {
             graph    : graph,
             g_prime  : DirectedGraph::new(),
             adjustments : adjustment_info,
-            shortest_path_length : TwoDArray::<MinMax<usize>>::new(num_vertex,num_vertex,MinMax::NA),
+            shortest_path_lengths:  BTreeMap::<usize,BTreeMap::<usize,MinMax<i64>>>::new(),
             found_negative_cycle : false,
             num_vertex:  num_vertex,
         }
@@ -68,53 +68,56 @@ impl<'a> Johnson<'a> {
         info!("Staring Bellman");
         self.adjustments.calculate_shortest_paths(self.graph, 0);
         let adjustment_results = self.adjustments.get_shortest_path_distances();
-        info!("Adjustment results {:?}",adjustment_results);
+        self.found_negative_cycle = self.adjustments.has_negative_cycle();
+        info!("Adjustment negative_cycle? {} results {:?} ",self.found_negative_cycle, adjustment_results);
 
-        // create the graph with the adjusted edge weights cacluated as preveious edge +
-        // source_vertex adjustment - dest_vertext adjustment
-        // skip vertex 0 since we added that to ensure that there a connected graph from the
-        // starting vertex 
-        for (id, edge) in self.graph.edge_iter() {
-            if edge.source() != 0 {
-                if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[&edge.source()], adjustment_results[&edge.dest()]) {
-                    let adj_weight =  edge.weight() + source_adj - dest_adj;
-                    (&mut self.g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
+
+        if !self.found_negative_cycle {
+
+            // create the graph with the adjusted edge weights cacluated as preveious edge +
+            // source_vertex adjustment - dest_vertext adjustment
+            // skip vertex 0 since we added that to ensure that there a connected graph from the
+            // starting vertex 
+            for (id, edge) in self.graph.edge_iter() {
+                if edge.source() != 0 {
+                    if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[&edge.source()], adjustment_results[&edge.dest()]) {
+                        let adj_weight =  edge.weight() + source_adj - dest_adj;
+                        (&mut self.g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
+                    }
+                    else {
+                        error!("Non numeric adjustment values source: {} dest {} source adj: {} dest adj {}",
+                               edge.source(),
+                               edge.dest(),
+                               adjustment_results[&edge.source()],
+                               adjustment_results[&edge.dest()]
+                            );
+                    }
                 }
-                else {
-                    error!("Non numeric adjustment values source: {} dest {} source adj: {} dest adj {}",
-                           edge.source(),
-                           edge.dest(),
-                           adjustment_results[&edge.source()],
-                           adjustment_results[&edge.dest()]
-                        );
-                }
+                
+
             }
-            
+            debug!("g_prime {:#?}",self.g_prime);
+
+
+            let mut result_map = BTreeMap::<usize,BTreeMap::<usize,MinMax<i64>>>::new();
+            for start in 1..self.num_vertex {
+                let mut d = Dijkstra::new(start);
+
+                for (id, _v) in self.g_prime.vertex_iter() {
+                    d.initialize_vertex(id.clone());
+                }
+                d.calculate_shortest_paths(&self.g_prime, start);
+                let results = d.get_shortest_path_distances();
+                info!("Results for Starting Vertex {} Before adjustment correction", start);
+                info!("{:?}",results);
+                self.shortest_path_lengths.insert(start,results);
+
+            }
 
         }
-        debug!("g_prime {:#?}",self.g_prime);
-
-
-        for start in 1..self.num_vertex {
-            let mut d = Dijkstra::new(start);
-
-            for (id, _v) in self.g_prime.vertex_iter() {
-                d.initialize_vertex(id.clone());
-            }
-            d.calculate_shortest_paths(&self.g_prime, start);
-            let results = d.get_shortest_path_distances();
+        else {
+            info!("Found Negative Cycle")
         }
-        // get the results of the bellman by vertex...  (need to change the way results are
-        // reported)
-
-
-        // creat a new graph with edges based on adjustment values.
-        //
-        //
-        //
-        // Run dijkstra on this graph n times
-        //
-        // Done... and report results
 
     }
 
@@ -123,6 +126,11 @@ impl<'a> Johnson<'a> {
     }
     
         
+    pub fn results_iter(&self) -> std::collections::btree_map::Iter<'_, usize, BTreeMap::<usize,MinMax<i64>>>
+    {
+        self.shortest_path_lengths.iter()
+
+    }
     pub fn print_result(&self, display_list: Vec<usize>, short_display: bool) {
 
         warn!("print_result - TODO");

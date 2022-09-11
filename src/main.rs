@@ -166,13 +166,24 @@ fn main() {
                 Some(x) => x.clone(),
             };
             if j.has_negative_cycle() {
-                println!("Negative cycle found...")
-            }
-            if *show_paths {
-                j.print_paths(vertex_list);
+                info!("Negative cycle found...");
+                if *show_paths {
+                    println!("null");
+                }
+                else {
+                    println!("NULL");
+                }
             }
             else {
-                j.print_result(list,true);
+                if *show_paths {
+                    j.print_paths(vertex_list);
+                }
+                else {
+                    j.print_result(list,true);
+                    for result in j.results_iter() {
+                        println!("{:?}",result);
+                    }
+                }
             }
 
         },
@@ -184,7 +195,8 @@ fn main() {
             }
         },
         Some(Commands::Print {..}) => {
-            println!("Printing Graphs...");
+            println!("Printing Graph...");
+            g.print_graph();
         },
         None => {
             println!("No command given")

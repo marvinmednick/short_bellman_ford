@@ -332,7 +332,7 @@ impl DirectedGraph {
 		self.edge_map.keys().cloned().collect()
 	}
 
-	pub fn print_vertexes(&self) {
+	pub fn print_graph(&self) {
         println!("Vertexes:");
 		for (key, value) in &self.vertex_map {
 //			let out_list : String = value.outgoing.iter().map(|x| {let e = self.edge_map.get(x).unwrap(); format!("e{} v{}(w{}) ; ",x,e.dest,e.weight) }).collect();

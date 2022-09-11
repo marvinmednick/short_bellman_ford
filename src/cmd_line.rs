@@ -4,13 +4,11 @@ extern crate clap;
 //use clap::{Arg, Command,arg, Parser, Subcommand};
 use clap::{Parser, Subcommand};
 
-/*
 #[derive(Debug)]
 pub enum InputFileFormat {
     AdjacentSingleEntryPerLine,
     AdjacentMultiEntryPerLine,
 }
-*/
 
 #[derive(Parser, Debug)]
 #[clap(name = "short")]
@@ -22,6 +20,9 @@ pub struct CommandArgs  {
    #[clap(value_parser)]
    pub filename: String,
 
+    #[clap(short, long )]
+    input_format: Option<bool>,
+
    #[clap(subcommand)]
    pub command: Option<Commands>,
 
@@ -32,7 +33,8 @@ pub struct CommandArgs  {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// does testing things
+
+
     Verify {
         /// Verifies if all elements of  specified path exists in the graph
         #[clap(short, long, action)]
