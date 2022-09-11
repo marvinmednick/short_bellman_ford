@@ -76,7 +76,7 @@ impl<'a> Johnson<'a> {
         // starting vertex 
         for (id, edge) in self.graph.edge_iter() {
             if edge.source() != 0 {
-                if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[edge.source()], adjustment_results[edge.dest()]) {
+                if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[&edge.source()], adjustment_results[&edge.dest()]) {
                     let adj_weight =  edge.weight() + source_adj - dest_adj;
                     (&mut self.g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
                 }
@@ -84,8 +84,8 @@ impl<'a> Johnson<'a> {
                     error!("Non numeric adjustment values source: {} dest {} source adj: {} dest adj {}",
                            edge.source(),
                            edge.dest(),
-                           adjustment_results[edge.source()],
-                           adjustment_results[edge.dest()]
+                           adjustment_results[&edge.source()],
+                           adjustment_results[&edge.dest()]
                         );
                 }
             }
@@ -249,7 +249,8 @@ mod tests {
     use log::{  info , /*error, debug, warn, trace */ };
 
     fn init() {
-        env_logger::init();
+      let _ = env_logger::builder().is_test(true).try_init();
+      info!("Init {}",module_path!());
     }
 
 	fn setup_basic(mut g :&mut DirectedGraph) { 

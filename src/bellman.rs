@@ -189,11 +189,13 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
         
     /// Returns the a list of all the hortest disntance calcuated from the starting vertex
     /// to each of the rest of the vertexes 
-    pub fn get_shortest_path_distances(&self) -> Vec<MinMax<i64>> {
+    pub fn get_shortest_path_distances(&self) -> BTreeMap<usize,MinMax<i64>> {
 
-        let mut result_list = Vec::<MinMax<i64>>::new();
+        let mut result_list = BTreeMap::<usize,MinMax<i64>>::new();
+        let mut index = 0;
         for result in self.distances.get_row(self.last_iteration) {
-            result_list.push(result.clone());
+            result_list.insert(index,result.clone());
+            index += 1;
         }
 
         result_list
@@ -237,12 +239,12 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> Vec<(usize, Vec<usize>,bool)> {
-        let mut result = Vec::<(usize,Vec<usize>,bool)>::new();
+    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, (Vec<usize>,bool)> {
+        let mut result = BTreeMap::<usize,(Vec<usize>,bool)>::new();
         for v in vertex_list {
             let path = self.find_path(v);
             let has_cycle = path.len() > self.num_vertex;
-            result.push((v,path,has_cycle));
+            result.insert(v,(path,has_cycle));
             
         }
         result

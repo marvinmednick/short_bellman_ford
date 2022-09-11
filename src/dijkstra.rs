@@ -130,14 +130,14 @@ impl Dijkstra {
         
     /// Returns the a list of all the hortest disntance calcuated from the starting vertex
     /// to each of the rest of the vertexes 
-    pub fn get_shortest_path_distances(&self) -> Vec<MinMax<i64>> {
+    pub fn get_shortest_path_distances(&self) -> BTreeMap<usize, MinMax<i64>> {
 
-        let mut result_list = Vec::<MinMax<i64>>::new();
+        let mut result_list = BTreeMap::<usize,MinMax<i64>>::new();
         // add vertex 0 since it not define  (TODO -- cleanup vertex numbering and naming)
-        result_list.push(MinMax::Max);
+        result_list.insert(0,MinMax::Max);
         for (v, result) in self.processed_vertex.iter() {
             trace!("getsp_dist: v {} result {:?}",v,result);
-            result_list.push(Value(result.score.clone()));
+            result_list.insert(*v,Value(result.score.clone()));
         }
 
         result_list
@@ -179,12 +179,12 @@ impl Dijkstra {
 
     }
 
-    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> Vec<(usize, Vec<usize>,bool)> {
-        let mut result = Vec::<(usize,Vec<usize>,bool)>::new();
+    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, (Vec<usize>,bool)> {
+        let mut result = BTreeMap::<usize,(Vec<usize>,bool)>::new();
         for v in vertex_list {
             let path = self.find_path(v);
             let has_cycle = false;
-            result.push((v,path,has_cycle));
+            result.insert(v,(path,has_cycle));
             
         }
         result

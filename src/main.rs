@@ -1,6 +1,8 @@
 use std::path::Path;
 use std::fs::File;
 use log::{  info , error, debug, /*warn, */trace };
+use std::collections::BTreeMap;
+
 
 use clap::Parser;
 
@@ -26,7 +28,7 @@ use crate::johnson::Johnson;
 mod parse;
 use crate::parse::{read_adjacency_multi };
 
-fn print_distance_result(results: Vec<MinMax<i64>>, display_list: Vec<usize>) {
+fn print_distance_result(results: BTreeMap<usize,MinMax<i64>>, display_list: Vec<usize>) {
 
 
 //    trace!("Results {:?}",results);
@@ -41,12 +43,12 @@ fn print_distance_result(results: Vec<MinMax<i64>>, display_list: Vec<usize>) {
 
     let mut is_first = true;
     for v in list_of_vertexes {
-        trace!("Checking {}, result {}",v,results[v]);
+        trace!("Checking {}, result {}",v,results[&v]);
         if v < results.len() {
            if !is_first {
                print!(",");
             }
-            print!("{}", results[v]);
+            print!("{}", results[&v]);
             is_first = false;
         }
         else {
@@ -59,10 +61,10 @@ fn print_distance_result(results: Vec<MinMax<i64>>, display_list: Vec<usize>) {
 
 
 
-pub fn print_path_results(path_results: Vec<(usize,Vec<usize>,bool)> ) {
+pub fn print_path_results(path_results: BTreeMap<usize,(Vec<usize>,bool)> ) {
 
     let num_entries = path_results.len().clone();
-    for (starting_vertex, path, has_cycle) in path_results {
+    for (starting_vertex, (path, has_cycle)) in path_results {
 
 
         info!("Printing path results for {} items",num_entries);
