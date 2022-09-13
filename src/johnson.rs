@@ -5,13 +5,13 @@ use two_d_array::TwoDArray;
 use crate::dirgraph::DirectedGraph;
 use crate::graphbuilder::GraphBuilder;
 
-use log::{ info, error, /* debug ,*/ warn, /* trace*/ };
+use log::{ info, error, debug ,warn, /* trace*/ };
 
 // use std::fmt;
 use crate::bellman::{Bellman,MinMax};
-//use crate::bellman::MinMax::{Value,NA};
+use crate::bellman::MinMax::{Value};
 
-
+#[derive(Debug)]
 pub struct Johnson<'a> {
         graph : &'a mut DirectedGraph,
         g_prime: DirectedGraph,
@@ -63,7 +63,22 @@ impl<'a> Johnson<'a> {
 
 
         info!("Staring Bellman");
-        self.adjustments.calculate_shortest_paths(self.graph, 0);
+        self.adjustments.calculate_shortest_paths(self.graph, 1);
+        let adjustment_results = self.adjustments.get_shortest_path_distances();
+        info!("Adjustment results {:?}",adjustment_results);
+
+        for (id, edge) in self.graph.edge_iter() {
+            if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[edge.source()], adjustment_results[edge.dest()]) {
+                let adj_weight =  edge.weight() + source_adj - dest_adj;
+                (&mut self.g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
+            }
+            else {
+                error!("Non value adjustment values");
+            }
+            
+
+        }
+        debug!("g_prime {:#?}",self.g_prime);
         // get the results of the bellman by vertex...  (need to change the way results are
         // reported)
 
@@ -203,26 +218,29 @@ impl<'a> Johnson<'a> {
 // use the attribute below for unit tests
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::dirgraph::DirectedGraph;
+    use crate::graphbuilder::GraphBuilder;
+    use crate::Johnson;
 
-	fn setup_basic() -> Johnson<'static> {
-		let mut g = DirectedGraph::new();
-		assert_eq!(g.add_edge(1,2),Some(1));
-		assert_eq!(g.add_edge(1,3),Some(2));
-		assert_eq!(g.add_edge(2,3),Some(1));
-		assert_eq!(g.add_edge(2,4),Some(2));
-		assert_eq!(g.add_edge(3,4),Some(1));
+	fn setup_basic(mut g :&mut DirectedGraph) { 
+		assert_eq!(g.add_edge(1,2,12),Some(1));
+		assert_eq!(g.add_edge(1,3,-13),Some(2));
+		assert_eq!(g.add_edge(2,3,23),Some(3));
+		assert_eq!(g.add_edge(2,4,-24),Some(4));
+		assert_eq!(g.add_edge(3,4,34),Some(5));
+		assert_eq!(g.add_edge(4,5,-45),Some(6));
 		assert_eq!(g.get_outgoing_vertex_ids(1),&[2,3]);
 		assert_eq!(g.get_outgoing_vertex_ids(2),&[3,4]);
 		assert_eq!(g.get_outgoing_vertex_ids(3),&[4]);
-		assert_eq!(g.get_outgoing_vertex_ids(4),&[]);
-        Johnson::new(&mut g)
+		assert_eq!(g.get_outgoing_vertex_ids(4),&[5]);
 	} 
 
     #[test]
     fn basic() {
-        let j = setup_basic(); 
-        println!("{:#?}",j);
+		let mut g = DirectedGraph::new();
+        setup_basic(&mut g); 
+        let mut j = Johnson::<'_>::new(&mut g);
+        j.calculate_shortest_paths();
     }
 
 }

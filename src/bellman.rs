@@ -32,6 +32,7 @@ impl<T: fmt::Display> fmt::Display for MinMax<T>
 }
 
 
+#[derive(Debug)]
 pub struct Bellman {
         /// Two dimensional array containing the length of the shortest path to each vertex for
         /// each iteration (size is )

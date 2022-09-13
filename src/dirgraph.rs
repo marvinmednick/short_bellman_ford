@@ -507,7 +507,7 @@ mod tests {
 	#[test]
 	fn test_verify_path() {
 		let mut graph = setup_basic1();
-        let mut g = &mut graph;
+        let g = &mut graph;
 		assert_eq!(g.verify_path(vec!(1,2,3,4)),Some(35));
 		assert_eq!(g.verify_path(vec!(4,1)),None);
     }
