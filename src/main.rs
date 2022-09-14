@@ -117,8 +117,7 @@ fn main() {
             }
             d.calculate_shortest_paths(&g, *start);
             let results = d.get_shortest_path_distances();
-            let vertex_list = (1..=g.vertex_count()).collect();
-            let path_results = d.get_shortest_paths(vertex_list);
+            let path_results = d.get_shortest_paths();
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
@@ -137,8 +136,7 @@ fn main() {
             info!("Staring Bellman");
             d.calculate_shortest_paths(&g, *start);
             let results = d.get_shortest_path_distances();
-            let vertex_list = (1..=g.vertex_count()).collect();
-            let path_results = d.get_shortest_paths(vertex_list);
+            let path_results = d.get_shortest_paths();
             let list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
@@ -174,9 +172,9 @@ fn main() {
                 }
             }
             else {
-                let (shortest_len,vertex_pair) = j.shortest_shortest_path();
+                let (shortest_len,vertex_list) = j.shortest_shortest_path();
                 if *show_paths {
-                    println!("[{}, {}]",vertex_pair.0,vertex_pair.1);
+                    println!("{:?}",vertex_list);
                 }
                 else {
                     println!("{}",shortest_len);

@@ -15,6 +15,7 @@ Cargo.lock
 # Local link to executable
 bf
 short
+short_rel
 
 # files for saving output for review
 output*

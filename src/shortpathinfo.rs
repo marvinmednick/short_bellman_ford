@@ -1,6 +1,6 @@
 use crate::bellman::{MinMax};
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct ShortestPathInfo {
     pub source: usize,
     pub dest: usize,

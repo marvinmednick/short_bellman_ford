@@ -4,6 +4,7 @@ use std::collections::{BTreeMap};
 
 use crate::dirgraph::DirectedGraph;
 use crate::graphbuilder::GraphBuilder;
+use crate::ShortestPathInfo;
 
 use log::{ info, error, debug /*,warn */,  trace };
 
@@ -15,7 +16,7 @@ use crate::bellman::MinMax::{Value};
 #[derive(Debug)]
 pub struct Johnson<'a> {
         graph : &'a mut DirectedGraph,
-        shortest_path_lengths:  BTreeMap::<usize,BTreeMap::<usize,MinMax<i64>>>,
+        shortest_path_info:  BTreeMap::<usize,BTreeMap::<usize,ShortestPathInfo>>,
         found_negative_cycle : bool,
         num_vertex: usize
 
@@ -45,7 +46,7 @@ impl<'a> Johnson<'a> {
 
         Johnson {
             graph    : graph,
-            shortest_path_lengths:  BTreeMap::<usize,BTreeMap::<usize,MinMax<i64>>>::new(),
+            shortest_path_info:  BTreeMap::<usize,BTreeMap::<usize,ShortestPathInfo>>::new(),
             found_negative_cycle : false,
             num_vertex:  num_vertex,
         }
@@ -103,15 +104,22 @@ impl<'a> Johnson<'a> {
                     d.initialize_vertex(id.clone());
                 }
                 d.calculate_shortest_paths(&g_prime, start);
-                let mut results = d.get_shortest_path_distances();
-                trace!("Results for Starting Vertex {} Before adjustment correction", start);
-                trace!("{:?}",results);
-                for (vertex_id, distance) in results.iter_mut() {
-                    *distance = *distance - adjustment_results[&start] + adjustment_results[vertex_id];
-                }
+//                let mut results = d.get_shortest_path_distances();
+                let mut results = d.get_shortest_paths();
+//               trace!("Results for Starting Vertex {} Before adjustment correction", start);
+//              trace!("{:?}",results);
+//                for (vertex_id, distance) in results.iter_mut() {
+ //                   *distance = *distance - adjustment_results[&start] + adjustment_results[vertex_id];
+ //              }
                 info!("Results for Starting Vertex {} AFTER adjustment correction", start);
-                info!("{:?}",results);
-                self.shortest_path_lengths.insert(start,results);
+                for (vertex_id, info) in results.iter_mut() {
+                    let mut updated_info = info.clone();
+                    updated_info.distance = info.distance - adjustment_results[&start] + adjustment_results[vertex_id];
+                    *info = updated_info
+                }
+//                trace!("{:?}",results);
+                trace!("{:#?}",results);
+                self.shortest_path_info.insert(start,results);
 
             }
 
@@ -127,20 +135,20 @@ impl<'a> Johnson<'a> {
     }
     
         
-    pub fn results_iter(&self) -> std::collections::btree_map::Iter<'_, usize, BTreeMap::<usize,MinMax<i64>>>
+    pub fn results_iter(&self) -> std::collections::btree_map::Iter<'_, usize, BTreeMap::<usize,ShortestPathInfo>>
     {
-        self.shortest_path_lengths.iter()
+        self.shortest_path_info.iter()
 
     }
 
-    pub fn shortest_shortest_path(&self) -> (MinMax<i64>, (MinMax<usize>,MinMax<usize>)){
+    pub fn shortest_shortest_path(&self) -> (MinMax<i64>, Vec<usize>){
         let mut min_path_len = MinMax::NA;
-        let mut min_path = (MinMax::NA,MinMax::NA);
-        for (start, path_lengths) in self.shortest_path_lengths.iter() {
-            for (dest, len) in path_lengths.iter() {
-                if *len < min_path_len {
-                    min_path_len = *len;
-                    min_path = (Value(*start),Value(*dest));
+        let mut min_path = Vec::<usize>::new();
+        for (_start, path_info) in self.shortest_path_info.iter() {
+            for (_dest, info) in path_info.iter() {
+                if info.distance < min_path_len {
+                    min_path_len = info.distance;
+                    min_path = info.path.clone();
                 }
 
             }

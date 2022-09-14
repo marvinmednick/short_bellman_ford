@@ -275,7 +275,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, ShortestPathInfo> {
+    pub fn get_shortest_paths(&self) -> BTreeMap<usize, ShortestPathInfo> {
         let mut result = BTreeMap::<usize,ShortestPathInfo>::new();
         /*
         for v in vertex_list {

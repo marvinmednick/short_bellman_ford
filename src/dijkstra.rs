@@ -180,7 +180,7 @@ impl Dijkstra {
 
     }
 
-    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, ShortestPathInfo> {
+    pub fn get_shortest_paths(&self) -> BTreeMap<usize, ShortestPathInfo> {
         let mut result = BTreeMap::<usize,ShortestPathInfo>::new();
         for (v, info) in self.processed_vertex.iter() {
             trace!("getsp_dist: v {} info {:?}",v,info);
@@ -192,7 +192,7 @@ impl Dijkstra {
                 path: self.find_path(*v),
                 has_negative_cycle : false,
             };
-            trace!("info {:?}",entry);
+            debug!("info {:?}",entry);
             result.insert(*v,entry);
         }
         result
