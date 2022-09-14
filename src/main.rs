@@ -1,32 +1,31 @@
+#![allow(dead_code)]
 use std::path::Path;
 use std::fs::File;
 use log::{  info , error, debug, /*warn, */trace };
 use std::collections::BTreeMap;
 
 
+
 use clap::Parser;
 
 
 mod graphbuilder;
-
 mod cmd_line;
+mod shortpathinfo;
+mod dirgraph;
+mod dijkstra;
+mod bellman;
+mod johnson;
+mod parse;
+
 use crate::cmd_line::CommandArgs;
 use crate::cmd_line::Commands;
-
-mod dirgraph;
 use crate::dirgraph::DirectedGraph;
-
-mod dijkstra;
 use crate::dijkstra::Dijkstra;
-
-mod bellman;
 use crate::bellman::{Bellman,MinMax};
-
-mod johnson;
 use crate::johnson::Johnson;
-
-mod parse;
 use crate::parse::{read_adjacency_multi };
+use crate::shortpathinfo::ShortestPathInfo;
 
 fn print_distance_result(results: BTreeMap<usize,MinMax<i64>>, display_list: Vec<usize>) {
 
@@ -61,19 +60,19 @@ fn print_distance_result(results: BTreeMap<usize,MinMax<i64>>, display_list: Vec
 
 
 
-pub fn print_path_results(path_results: BTreeMap<usize,(Vec<usize>,bool)> ) {
+pub fn print_path_results(path_results: BTreeMap<usize,ShortestPathInfo> ) {
 
     let num_entries = path_results.len().clone();
-    for (starting_vertex, (path, has_cycle)) in path_results {
+    for (starting_vertex, entry_info) in path_results {
 
 
         info!("Printing path results for {} items",num_entries);
         let mut first=true;
-        let path_string : String = path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
+        let path_string : String = entry_info.path.iter().map( |v| { if first { first=false; format!("{}",v) } else { format!(", {}",v) } } ).collect();
 
         print!("{} => path => {}",starting_vertex,path_string);
-        if has_cycle {
-            print!("... (has cycle)");
+        if entry_info.has_negative_cycle {
+            print!("... (has negative cycle)");
         }
         println!();
     }
@@ -156,12 +155,12 @@ fn main() {
 
         },
         Some(Commands::Johnson { display_list, show_paths }) => {
-            let vertex_list = g.get_vertex_ids();
+            // let vertex_list = g.get_vertex_ids();
             let mut j = Johnson::<'_>::new(&mut g);
 
             info!("Staring Johnson");
             j.calculate_shortest_paths();
-            let list = match display_list {
+            let _list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
             };
@@ -175,14 +174,12 @@ fn main() {
                 }
             }
             else {
+                let (shortest_len,vertex_pair) = j.shortest_shortest_path();
                 if *show_paths {
-                    j.print_paths(vertex_list);
+                    println!("[{}, {}]",vertex_pair.0,vertex_pair.1);
                 }
                 else {
-                    j.print_result(list,true);
-                    for result in j.results_iter() {
-                        println!("{:?}",result);
-                    }
+                    println!("{}",shortest_len);
                 }
             }
 

@@ -4,14 +4,15 @@ use minheap::MinHeap;
 
 use crate::dirgraph::DirectedGraph;
 
-use log::{ info, error, debug, /*warn,*/ trace };
+use log::{ info, error, debug, warn, trace };
 use crate::bellman::{MinMax,MinMax::Value,MinMax::NA};
+use crate::shortpathinfo::ShortestPathInfo;
 
 #[derive(Debug,Clone,PartialOrd,PartialEq)]
-struct VertexInfo {
+pub struct VertexInfo {
     // first entry in the field, so will be used for sorting by min heap by default
-    score: i64,
-    associated_vertex: Option<usize>,
+    score: MinMax<i64>,
+    preceeding_vertex: Option<usize>,
 }
 
 
@@ -43,7 +44,7 @@ impl Dijkstra {
     }
 
     pub fn initialize_vertex(&mut self, vertex_id: usize) {
-        self.unprocessed_vertex.insert(vertex_id,VertexInfo {  score: 100000000, associated_vertex: None} );
+        self.unprocessed_vertex.insert(vertex_id,VertexInfo {  score: MinMax::Max, preceeding_vertex: None} );
         self.predecessor.insert(vertex_id,None);
     }
         
@@ -58,7 +59,7 @@ impl Dijkstra {
             
             // setup the initial distance for the starting vertex to 0 (to itself) and no
             // associated Vertex
-            self.processed_vertex.insert(starting_vertex,VertexInfo { score: 0, associated_vertex: None } );
+            self.processed_vertex.insert(starting_vertex,VertexInfo { score: Value(0), preceeding_vertex: None } );
             self.predecessor.insert(starting_vertex,None);
 
             self.update_scoring(graph, starting_vertex);
@@ -70,7 +71,7 @@ impl Dijkstra {
             }
          }       
         else {
-            error!("Starting vertex {} is not in the graph",starting_vertex);
+            warn!("Starting vertex {} is not in the graph",starting_vertex);
         }
 
     }
@@ -94,13 +95,13 @@ impl Dijkstra {
             // if the adjacent vertex is still in the unprocessed list, then 
             // update the scoring, otherwise skip it (since its already in the processed list)
             if let Some(cur_info) = self.unprocessed_vertex.peek_id_data(e.dest()) {
-                let new_score = cur_vertex_distance + e.weight();
+                let new_score = cur_vertex_distance + Value(e.weight());
                 if new_score < cur_info.score {
                     trace!("Update scoring on {} from {} to {}, cur_vertex is {} e.source {}",e.dest(),cur_info.score,new_score,cur_vertex, e.source());
                     // get the index of the item id
                     let vertex_index = self.unprocessed_vertex.get_id_index(e.dest()).unwrap().clone();
                     // and update its value
-                    self.unprocessed_vertex.update(vertex_index,VertexInfo { score: new_score, associated_vertex: Some(cur_vertex)} );
+                    self.unprocessed_vertex.update(vertex_index,VertexInfo { score: new_score, preceeding_vertex: Some(cur_vertex)} );
                     self.predecessor.insert(e.dest(),Some(cur_vertex));
                     trace!("Unprocessed: {:?}",self.unprocessed_vertex);
                     trace!("Predecessors: {:?}",self.predecessor);
@@ -121,7 +122,7 @@ impl Dijkstra {
     /// Returns NA if the dest_vertex is out of rant
     pub fn get_shortest_path_distance (&self,dest_vertex: usize ) -> MinMax<i64> {
         if self.processed_vertex.contains_key(&dest_vertex) {
-            Value(self.get_processed(&dest_vertex).score.clone())
+            self.get_processed(&dest_vertex).score.clone()
         }
         else {
             NA
@@ -137,7 +138,7 @@ impl Dijkstra {
         result_list.insert(0,MinMax::Max);
         for (v, result) in self.processed_vertex.iter() {
             trace!("getsp_dist: v {} result {:?}",v,result);
-            result_list.insert(*v,Value(result.score.clone()));
+            result_list.insert(*v,result.score.clone());
         }
 
         result_list
@@ -150,7 +151,7 @@ impl Dijkstra {
 
         info!("Finding path for vertex {}", dest_vertex);
         let mut vertex_list = Vec::<usize>::new();
-        let mut predecessor_count = 0;
+//        let mut predecessor_count = 0;
         // put the destination vertex at the end of the list to match the stanford test cases
         // (doesn't seem correct to me)
         vertex_list.push(dest_vertex);
@@ -161,7 +162,7 @@ impl Dijkstra {
 
             let mut current_vertex = dest_vertex;
             while self.predecessor[&current_vertex] != None  {
-                predecessor_count += 1;
+ //               predecessor_count += 1;
                 if let Some(preceeding_vertex) = self.predecessor[&current_vertex] {
                     trace!("Adding Vertex {} to the path", preceeding_vertex);
                     vertex_list.push(preceeding_vertex.clone());
@@ -179,15 +180,28 @@ impl Dijkstra {
 
     }
 
-    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, (Vec<usize>,bool)> {
-        let mut result = BTreeMap::<usize,(Vec<usize>,bool)>::new();
+    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, ShortestPathInfo> {
+        let mut result = BTreeMap::<usize,ShortestPathInfo>::new();
+        for (v, info) in self.processed_vertex.iter() {
+            trace!("getsp_dist: v {} info {:?}",v,info);
+
+            let entry = ShortestPathInfo {
+                source: self.starting_vertex,
+                dest: *v,
+                distance: info.score.clone(),
+                path: self.find_path(*v),
+                has_negative_cycle : false,
+            };
+            trace!("info {:?}",entry);
+            result.insert(*v,entry);
+        }
+        result
+        /*
         for v in vertex_list {
             let path = self.find_path(v);
             let has_cycle = false;
             result.insert(v,(path,has_cycle));
-            
-        }
-        result
+        }*/
 
     }
 }

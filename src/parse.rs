@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufReader,BufRead};
 use regex::Regex;
-use log::{ info, error, debug, /*warn,*/ trace };
+use log::{ /* info ,*/ error, debug, /*warn,*/ trace };
 use crate::graphbuilder::GraphBuilder;
 
 
@@ -69,6 +69,8 @@ where F: GraphBuilder,
     }
 }
 
+/*  NOT USED -- above can read either one or moer per line and with or without ,
+ *
 pub fn read_adjacency_single<F: GraphBuilder, >
     ( file: & mut File, order: VertexOrder, mut graph_functions: F ) {
 
@@ -110,4 +112,5 @@ pub fn read_adjacency_single<F: GraphBuilder, >
     }
 
 }
+*/
 

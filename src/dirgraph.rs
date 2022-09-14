@@ -1,12 +1,13 @@
 //use std::process; use std::io::{self, Write}; // use std::error::Error;
 //use std::cmp;
 use std::collections::{BTreeMap, BTreeSet};
-use log::{  info, error, debug, warn, trace };
+use log::{  info, error, debug, /*warn ,*/ trace };
 
 use std::fmt::Display; 
 use std::fmt;
 
 use crate::graphbuilder::GraphBuilder;
+
 
 #[derive(Debug,Clone)]
 pub struct Edge {
@@ -287,7 +288,7 @@ impl DirectedGraph {
         debug!("Incoming Result info looking for source {} as incoming to {} {:?}",source, vertex , find_result);
         match find_result {
             None => None,
-            Some((vertex,weight)) => Some(weight),
+            Some((_vertex,weight)) => Some(weight),
         }
     }
 
@@ -306,7 +307,7 @@ impl DirectedGraph {
         debug!("get_outoing_conn_weight: dest {} outgoing from {} {:?}",dest, vertex , find_result);
         match find_result {
             None => None,
-            Some((vertex,weight)) => Some(weight),
+            Some((_vertex,weight)) => Some(weight),
         }
     }
 

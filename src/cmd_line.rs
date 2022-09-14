@@ -4,11 +4,13 @@ extern crate clap;
 //use clap::{Arg, Command,arg, Parser, Subcommand};
 use clap::{Parser, Subcommand};
 
+/*
 #[derive(Debug)]
 pub enum InputFileFormat {
     AdjacentSingleEntryPerLine,
     AdjacentMultiEntryPerLine,
 }
+*/
 
 #[derive(Parser, Debug)]
 #[clap(name = "short")]

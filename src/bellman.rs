@@ -1,6 +1,7 @@
 extern crate two_d_array;
 use std::collections::{BTreeMap};
 use two_d_array::TwoDArray;
+use std::ops::{Add,Sub};
 
 use crate::dirgraph::DirectedGraph;
 
@@ -8,6 +9,7 @@ use log::{ info, error, debug, /*warn,*/ trace };
 
 use std::fmt;
 use crate::bellman::MinMax::{Value,NA};
+use crate::ShortestPathInfo;
 
 #[derive(Debug,Clone,Copy,PartialOrd,Ord,PartialEq,Eq)]
 pub enum MinMax<T> {
@@ -27,6 +29,40 @@ impl<T: fmt::Display> fmt::Display for MinMax<T>
             MinMax::Max => f.pad(&format!("Max")),
             MinMax::NA =>  f.pad(&format!("NA")),
             MinMax::Value(ref x) =>  f.pad(&format!("{}", x))
+        }
+    }
+}
+
+impl<T: std::ops::Add + std::cmp::PartialEq + Add<Output = T>> Add for MinMax<T> {
+    type Output = MinMax<T>;
+
+    fn add(self, other: MinMax<T>) -> MinMax<T> {
+
+        match (self, other ) {
+            (MinMax::Min, MinMax::Min)  | (MinMax::Min,MinMax::NA) | (MinMax::NA, MinMax::Min) =>  MinMax::Min,
+            (MinMax::NA, MinMax::NA) => MinMax::NA,
+            (Value(op1), MinMax::Min) | (Value(op1), MinMax::NA) => Value(op1),
+            (MinMax::Min, Value(op2)) | (MinMax::NA, Value(op2)) => Value(op2),
+            (MinMax::Max,_) | (_, MinMax::Max) => MinMax::Max,
+            (Value(op1), Value(op2)) => Value(op1+op2),
+        }
+    }
+}
+
+impl<T: std::ops::Sub + std::cmp::PartialEq + Sub<Output = T>> Sub for MinMax<T> {
+    type Output = MinMax<T>;
+
+    fn sub(self, other: MinMax<T>) -> MinMax<T> {
+
+        match (self, other ) {
+            (MinMax::Min, MinMax::Min)  | (MinMax::Min,MinMax::NA) | (MinMax::NA, MinMax::Min) =>  MinMax::Min,
+            (MinMax::NA, MinMax::NA) => MinMax::NA,
+            (Value(op1), MinMax::Min) | (Value(op1), MinMax::NA) => Value(op1),
+            (MinMax::Min, Value(_)) => MinMax::Min,
+            (MinMax::NA, Value(_)) => MinMax::Min,
+            (MinMax::Max,_) => MinMax::Max,
+            (_, MinMax::Max) => MinMax::Min,
+            (Value(op1), Value(op2)) => Value(op1-op2),
         }
     }
 }
@@ -239,13 +275,40 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
 
     }
 
-    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, (Vec<usize>,bool)> {
-        let mut result = BTreeMap::<usize,(Vec<usize>,bool)>::new();
+    pub fn get_shortest_paths(&self, vertex_list: Vec<usize>) -> BTreeMap<usize, ShortestPathInfo> {
+        let mut result = BTreeMap::<usize,ShortestPathInfo>::new();
+        /*
         for v in vertex_list {
             let path = self.find_path(v);
             let has_cycle = path.len() > self.num_vertex;
             result.insert(v,(path,has_cycle));
             
+        }
+        result
+        */
+
+        let mut index = 0;
+
+        for distance in self.distances.get_row(self.last_iteration) {
+            // TODO -- hack!!!!
+            if index == 0 {
+                index += 1;
+                continue;
+            }
+
+            let path = self.find_path(index);
+            let has_negative_cycle = path.len() > self.num_vertex;
+
+            let entry = ShortestPathInfo {
+                source: self.starting_vertex,
+                dest: index,
+                distance: *distance,
+                path,
+                has_negative_cycle,
+            };
+            trace!("info {:?}",entry);
+            result.insert(index,entry);
+            index += 1;
         }
         result
 
