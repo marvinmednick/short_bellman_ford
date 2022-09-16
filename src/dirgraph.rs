@@ -62,6 +62,7 @@ pub struct Vertex {
     // set of incomin and outgoing edge ids
 	incoming: BTreeSet<usize>,
 	outgoing: BTreeSet<usize>,
+    adjustment: i64,
 }
 
 impl Vertex {
@@ -72,6 +73,7 @@ impl Vertex {
 		Vertex {vertex_id: id, 
 				incoming: incoming, 
 				outgoing: outgoing,
+                adjustment: 0,
 				}
 	}
 
@@ -122,6 +124,15 @@ impl Vertex {
     pub fn id(&self) -> usize {
         self.vertex_id
     }
+
+    pub fn set_adjustment(&mut self, amount: i64) {
+        self.adjustment = amount;
+    }
+
+    pub fn adjustment(&self) -> i64 {
+        self.adjustment
+    }
+
 
 
 }
@@ -317,10 +328,24 @@ impl DirectedGraph {
         self.vertex_map.iter()
     }
 
+    /// get an iterator to all of the vertexes in the graph
+    pub fn vertex_iter_mut(&mut self) -> std::collections::btree_map::IterMut<'_, usize, Vertex> {
+        self.vertex_map.iter_mut()
+    }
     /// get an iterator to all of the edges in the graph
     pub fn edge_iter(&self) -> std::collections::btree_map::Iter<'_, usize, Edge> {
         self.edge_map.iter()
     }
+
+    /// get a complete list of vertex ids in the graph
+	pub fn get_vertex_from_id(&self, id: usize) -> Option<&Vertex> {
+		self.vertex_map.get(&id)
+	}
+    ///
+    /// get a complete list of vertex ids in the graph
+	pub fn get_edge_from_id(&self, id: usize) -> Option<&Edge> {
+		self.edge_map.get(&id)
+	}
 
 
     /// get a complete list of vertex ids in the graph
@@ -395,6 +420,22 @@ impl DirectedGraph {
         Some(total_weight)
         
     }
+
+    /// get an iterator to all of the edges in the graph
+    pub fn adjust_edges(&mut self) {
+
+        for edge_id in self.get_edge_ids() {
+            let edge_info = self.get_edge_from_id(edge_id).unwrap();
+            let source_adjustment = self.get_vertex_from_id(edge_info.source).unwrap().adjustment(); 
+            let dest_adjustment = self.get_vertex_from_id(edge_info.dest).unwrap().adjustment(); 
+            let adjusted_weight = edge_info.weight + source_adjustment - dest_adjustment;
+
+            let mut edge = self.edge_map.get_mut(&edge_id).unwrap();
+            edge.weight = adjusted_weight;
+
+        }
+    }
+
 }
 
 

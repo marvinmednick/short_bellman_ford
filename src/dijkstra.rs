@@ -4,7 +4,7 @@ use minheap::MinHeap;
 
 use crate::dirgraph::DirectedGraph;
 
-use log::{ info, error, debug, warn, trace };
+use log::{ /* info ,*/ error, debug, warn, trace };
 use crate::bellman::{MinMax,MinMax::Value,MinMax::NA};
 use crate::shortpathinfo::ShortestPathInfo;
 

@@ -72,7 +72,6 @@ impl<'a> Johnson<'a> {
 
 
         if !self.found_negative_cycle {
-
             // create the graph with the adjusted edge weights cacluated as preveious edge +
             // source_vertex adjustment - dest_vertext adjustment
             // skip vertex 0 since we added that to ensure that there a connected graph from the
@@ -157,7 +156,7 @@ impl<'a> Johnson<'a> {
     /// Find all shortest path from each vertex to all other vertes
     pub fn find_shortest_shortest_path(&mut self) -> Option<ShortestPathInfo> {
         let mut adjustment_info = Bellman::new(self.num_vertex);
-        let mut g_prime  = DirectedGraph::new();
+        //let mut g_prime  = DirectedGraph::new();
 
         info!("Starting all shortest path analysis with Johnson algorithm");
         self.found_negative_cycle = false;
@@ -172,6 +171,14 @@ impl<'a> Johnson<'a> {
 
 
         if !self.found_negative_cycle {
+            for (id, v) in self.graph.vertex_iter_mut() {
+                if let Value(amount) = adjustment_results[id] {
+                    v.set_adjustment(amount);
+                } 
+
+            }
+
+            /*
             // create the graph with the adjusted edge weights cacluated as preveious edge +
             // source_vertex adjustment - dest_vertext adjustment
             // skip vertex 0 since we added that to ensure that there a connected graph from the
@@ -193,6 +200,9 @@ impl<'a> Johnson<'a> {
                 }
             }
             debug!("g_prime {:#?}",g_prime);
+            */
+
+            self.graph.adjust_edges();
 
             let mut shortest_distance = MinMax::Max;
             let mut shortest_path_info = None;
@@ -201,13 +211,13 @@ impl<'a> Johnson<'a> {
                 debug!("Shortest distance now {}",shortest_distance);
                 let mut d = Dijkstra::new(start);
 
-                for (id, _v) in g_prime.vertex_iter() {
+                for (id, _v) in self.graph.vertex_iter() {
                     d.initialize_vertex(id.clone());
                 }
                 if start % 100 == 0 {
                     info!("Calculating shortest paths from vertex {}", start);
                 }
-                d.calculate_shortest_paths(&g_prime, start);
+                d.calculate_shortest_paths(&self.graph, start);
 
                 if let Some(new_short_path_info) = d.get_shortest_shortest_path(shortest_distance,adjustment_results.clone()) {
                     if new_short_path_info.distance < shortest_distance {
