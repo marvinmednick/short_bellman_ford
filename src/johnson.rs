@@ -66,8 +66,9 @@ impl<'a> Johnson<'a> {
         adjustment_info.calculate_shortest_paths(self.graph, 0);
         let adjustment_results = adjustment_info.get_shortest_path_distances();
         self.found_negative_cycle = adjustment_info.has_negative_cycle();
-        info!("Adjustment negative_cycle? {}",self.found_negative_cycle );
-        info!("Adjustment results {:?} ", adjustment_results);
+        debug!("Adjustment negative_cycle? {}",self.found_negative_cycle );
+        debug!("Adjustment results {:?} ", adjustment_results);
+        info!("Bellman Complete");
 
 
         if !self.found_negative_cycle {
@@ -105,7 +106,7 @@ impl<'a> Johnson<'a> {
                 }
                 d.calculate_shortest_paths(&g_prime, start);
                 let mut results = d.get_shortest_paths();
-                info!("Results for Starting Vertex {} AFTER adjustment correction", start);
+                debug!("Results for Starting Vertex {} AFTER adjustment correction", start);
                 for (vertex_id, info) in results.iter_mut() {
                     let mut updated_info = info.clone();
                     updated_info.distance = info.distance - adjustment_results[&start] + adjustment_results[vertex_id];
@@ -166,8 +167,8 @@ impl<'a> Johnson<'a> {
         adjustment_info.calculate_shortest_paths(self.graph, 0);
         let adjustment_results = adjustment_info.get_shortest_path_distances();
         self.found_negative_cycle = adjustment_info.has_negative_cycle();
-        info!("Adjustment negative_cycle? {}",self.found_negative_cycle );
-        info!("Adjustment results {:?} ", adjustment_results);
+        debug!("Adjustment negative_cycle? {}",self.found_negative_cycle );
+        debug!("Adjustment results {:?} ", adjustment_results);
 
 
         if !self.found_negative_cycle {
@@ -202,6 +203,9 @@ impl<'a> Johnson<'a> {
 
                 for (id, _v) in g_prime.vertex_iter() {
                     d.initialize_vertex(id.clone());
+                }
+                if start % 100 == 0 {
+                    info!("Calculating shortest paths from vertex {}", start);
                 }
                 d.calculate_shortest_paths(&g_prime, start);
 

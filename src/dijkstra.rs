@@ -50,7 +50,7 @@ impl Dijkstra {
         
 
     pub fn calculate_shortest_paths(&mut self, graph: &DirectedGraph, starting_vertex: usize) {
-        info!("Starting shortest path with {}",starting_vertex);
+        trace!("Starting shortest path calucation for Vertex {}",starting_vertex);
 
         if let Some(starting_index) = self.unprocessed_vertex.get_id_index(starting_vertex) {
 
@@ -149,7 +149,7 @@ impl Dijkstra {
 
     fn find_path(&self, dest_vertex: usize) -> Vec<usize>{
 
-        info!("Finding path for vertex {}", dest_vertex);
+        trace!("Finding path for vertex {}", dest_vertex);
         let mut vertex_list = Vec::<usize>::new();
 //        let mut predecessor_count = 0;
         // put the destination vertex at the end of the list to match the stanford test cases
@@ -175,7 +175,7 @@ impl Dijkstra {
              }
         }
         let path : Vec<usize> = vertex_list.into_iter().rev().collect();
-        info!("Path from vertex {} to vertex {} -> {:?}", self.starting_vertex, dest_vertex, path);
+        trace!("Path from vertex {} to vertex {} -> {:?}", self.starting_vertex, dest_vertex, path);
         path
 
     }
@@ -185,11 +185,15 @@ impl Dijkstra {
         for (v, info) in self.processed_vertex.iter() {
             trace!("getsp_dist: v {} info {:?}",v,info);
 
+            let path = self.find_path(*v);
+            let path_len = path.len();
+
             let entry = ShortestPathInfo {
                 source: self.starting_vertex,
                 dest: *v,
                 distance: info.score.clone(),
-                path: self.find_path(*v),
+                path,
+                path_len,
                 has_negative_cycle : false,
             };
             debug!("info {:?}",entry);
@@ -205,21 +209,26 @@ impl Dijkstra {
         let mut min_distance = max_distance;
         let mut result = None;
 
+        let mut _vertex_count = 0;
         for (v, info) in self.processed_vertex.iter() {
-            info!("Checking for shorter path to {} - distance {} - min dist {}",v,info.score, min_distance);
+            trace!("Checking for shortest path from {} to {}",self.starting_vertex,v);
+            _vertex_count += 1;
             let adjusted_distance = info.score - adjustments[&self.starting_vertex] + adjustments[v];
 
             if self.starting_vertex != *v && adjusted_distance < min_distance {
 
+                let path = self.find_path(*v);
+                let path_len = path.len();
                 let new_entry = ShortestPathInfo {
                     source: self.starting_vertex,
                     dest: *v,
                     distance: adjusted_distance,
-                    path: self.find_path(*v),
+                    path,
+                    path_len,
                     has_negative_cycle : false,
                 };
                 min_distance = adjusted_distance;
-                info!("Shorter path found: {}->{} w {} {:?}",new_entry.source,new_entry.dest, new_entry.distance, new_entry.path);
+                trace!("Shorter path found: {}->{} w {} {:?}",new_entry.source,new_entry.dest, new_entry.distance, new_entry.path);
                 result = Some(new_entry);
             }
         }

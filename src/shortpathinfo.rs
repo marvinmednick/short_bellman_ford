@@ -6,5 +6,6 @@ pub struct ShortestPathInfo {
     pub dest: usize,
     pub distance: MinMax<i64>,
     pub path: Vec<usize>,
+    pub path_len: usize,
     pub has_negative_cycle: bool,
 }

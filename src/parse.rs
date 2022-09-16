@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufReader,BufRead};
 use regex::Regex;
-use log::{ /* info ,*/ error, debug, /*warn,*/ trace };
+use log::{  info , error, debug, /*warn,*/ trace };
 use crate::graphbuilder::GraphBuilder;
 
 
@@ -24,11 +24,14 @@ where F: GraphBuilder,
     //open the file
     let reader = BufReader::new(file);
 
-	let mut _count = 0;
+	let mut _line_count = 0;
     for line in reader.lines() {
-		_count += 1;	
+		_line_count += 1;	
 		let line_data = line.unwrap();
-        trace!("Proccesing Line {} - ({})",_count,line_data);
+        trace!("Proccesing Line {} - ({})",_line_count,line_data);
+        if _line_count % 10000 == 0 {
+            info!("Proccesing Line {} - ({})",_line_count,line_data);
+        }
 
         // split the line into the vertex and the list of adjacent vertexes/weight pairs
         //let re_vertex = Regex::new(r"\s*(?P<vertex>\d+)\s+(?P<adjacent_list>.*$)").unwrap();
@@ -64,7 +67,7 @@ where F: GraphBuilder,
             }
         }
         else {
-            error!("Line {} - No vertex found ({})",_count,line_data)
+            error!("Line {} - No vertex found ({})",_line_count,line_data)
         }
     }
 }

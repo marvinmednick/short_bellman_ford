@@ -200,7 +200,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
         for row in self.distances.get_row_iter() {
             let min = row.iter().min().unwrap();
             let row_format : String = row.iter().map(|val| format!("{:>4} ",val) ).collect();
-            info!("Iter {:2} :    {}  Min: {}", count,row_format, min);
+            trace!("Iter {:2} :    {}  Min: {}", count,row_format, min);
             count += 1
 
         }
@@ -297,6 +297,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
             }
 
             let path = self.find_path(index);
+            let path_len = path.len();
             let has_negative_cycle = path.len() > self.num_vertex;
 
             let entry = ShortestPathInfo {
@@ -304,6 +305,7 @@ let this_distance = MinMax::Value(edge_distance + e.weight());
                 dest: index,
                 distance: *distance,
                 path,
+                path_len,
                 has_negative_cycle,
             };
             trace!("info {:?}",entry);

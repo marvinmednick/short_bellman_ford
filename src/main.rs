@@ -100,6 +100,7 @@ fn main() {
 
 	let mut g = DirectedGraph::new();
 
+    info!("Starting Reading File");
     read_adjacency_multi(&mut file, &mut g );
 
 //    let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
@@ -156,13 +157,12 @@ fn main() {
             // let vertex_list = g.get_vertex_ids();
             let mut j = Johnson::<'_>::new(&mut g);
 
-            info!("Staring Johnson");
-            j.calculate_shortest_paths();
             let _list = match display_list {
                 None => vec!(),
                 Some(x) => x.clone(),
             };
 
+            info!("Staring Johnson");
             if let Some(shortest) = j.find_shortest_shortest_path() {
                 if *show_paths {
                     println!("{:?}",shortest.path);
@@ -181,6 +181,7 @@ fn main() {
                     println!("NULL");
                 }
             }
+            info!("Johnson complete");
 
             /*
             if j.has_negative_cycle() {
