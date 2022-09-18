@@ -196,12 +196,34 @@ impl Dijkstra {
             result.insert(*v,entry);
         }
         result
-        /*
-        for v in vertex_list {
-            let path = self.find_path(v);
-            let has_cycle = false;
-            result.insert(v,(path,has_cycle));
-        }*/
+
+    }
+
+    pub fn get_shortest_shortest_path(&self, max_distance: MinMax<i64>,adjustments: BTreeMap<usize,MinMax<i64>>) -> Option<ShortestPathInfo> {
+
+        // set the currently found min distnces to the max allowed distance
+        let mut min_distance = max_distance;
+        let mut result = None;
+
+        for (v, info) in self.processed_vertex.iter() {
+            info!("Checking for shorter path to {} - distance {} - min dist {}",v,info.score, min_distance);
+            let adjusted_distance = info.score - adjustments[&self.starting_vertex] + adjustments[v];
+
+            if self.starting_vertex != *v && adjusted_distance < min_distance {
+
+                let new_entry = ShortestPathInfo {
+                    source: self.starting_vertex,
+                    dest: *v,
+                    distance: adjusted_distance,
+                    path: self.find_path(*v),
+                    has_negative_cycle : false,
+                };
+                min_distance = adjusted_distance;
+                info!("Shorter path found: {}->{} w {} {:?}",new_entry.source,new_entry.dest, new_entry.distance, new_entry.path);
+                result = Some(new_entry);
+            }
+        }
+        result
 
     }
 }

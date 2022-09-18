@@ -162,6 +162,27 @@ fn main() {
                 None => vec!(),
                 Some(x) => x.clone(),
             };
+
+            if let Some(shortest) = j.find_shortest_shortest_path() {
+                if *show_paths {
+                    println!("{:?}",shortest.path);
+                }
+                else {
+                    println!("{}",shortest.distance);
+                }
+
+            }
+            else {
+                info!("Negative cycle found...");
+                if *show_paths {
+                    println!("null");
+                }
+                else {
+                    println!("NULL");
+                }
+            }
+
+            /*
             if j.has_negative_cycle() {
                 info!("Negative cycle found...");
                 if *show_paths {
@@ -180,6 +201,7 @@ fn main() {
                     println!("{}",shortest_len);
                 }
             }
+            */
 
         },
         Some(Commands::Verify {path}) => {

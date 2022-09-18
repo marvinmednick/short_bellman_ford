@@ -104,20 +104,13 @@ impl<'a> Johnson<'a> {
                     d.initialize_vertex(id.clone());
                 }
                 d.calculate_shortest_paths(&g_prime, start);
-//                let mut results = d.get_shortest_path_distances();
                 let mut results = d.get_shortest_paths();
-//               trace!("Results for Starting Vertex {} Before adjustment correction", start);
-//              trace!("{:?}",results);
-//                for (vertex_id, distance) in results.iter_mut() {
- //                   *distance = *distance - adjustment_results[&start] + adjustment_results[vertex_id];
- //              }
                 info!("Results for Starting Vertex {} AFTER adjustment correction", start);
                 for (vertex_id, info) in results.iter_mut() {
                     let mut updated_info = info.clone();
                     updated_info.distance = info.distance - adjustment_results[&start] + adjustment_results[vertex_id];
                     *info = updated_info
                 }
-//                trace!("{:?}",results);
                 trace!("{:#?}",results);
                 self.shortest_path_info.insert(start,results);
 
@@ -156,6 +149,87 @@ impl<'a> Johnson<'a> {
         }
         (min_path_len, min_path)
         
+    }
+
+
+
+    /// Find all shortest path from each vertex to all other vertes
+    pub fn find_shortest_shortest_path(&mut self) -> Option<ShortestPathInfo> {
+        let mut adjustment_info = Bellman::new(self.num_vertex);
+        let mut g_prime  = DirectedGraph::new();
+
+        info!("Starting all shortest path analysis with Johnson algorithm");
+        self.found_negative_cycle = false;
+
+
+        info!("Staring Bellman");
+        adjustment_info.calculate_shortest_paths(self.graph, 0);
+        let adjustment_results = adjustment_info.get_shortest_path_distances();
+        self.found_negative_cycle = adjustment_info.has_negative_cycle();
+        info!("Adjustment negative_cycle? {}",self.found_negative_cycle );
+        info!("Adjustment results {:?} ", adjustment_results);
+
+
+        if !self.found_negative_cycle {
+            // create the graph with the adjusted edge weights cacluated as preveious edge +
+            // source_vertex adjustment - dest_vertext adjustment
+            // skip vertex 0 since we added that to ensure that there a connected graph from the
+            // starting vertex 
+            for (_id, edge) in self.graph.edge_iter() {
+                if edge.source() != 0 {
+                    if let (Value(source_adj), Value(dest_adj))  = (adjustment_results[&edge.source()], adjustment_results[&edge.dest()]) {
+                        let adj_weight =  edge.weight() + source_adj - dest_adj;
+                        (&mut g_prime).add_edge(edge.source(),edge.dest(),adj_weight);
+                    }
+                    else {
+                        error!("Non numeric adjustment values source: {} dest {} source adj: {} dest adj {}",
+                               edge.source(),
+                               edge.dest(),
+                               adjustment_results[&edge.source()],
+                               adjustment_results[&edge.dest()]
+                            );
+                    }
+                }
+            }
+            debug!("g_prime {:#?}",g_prime);
+
+            let mut shortest_distance = MinMax::Max;
+            let mut shortest_path_info = None;
+
+            for start in 1..self.num_vertex {
+                debug!("Shortest distance now {}",shortest_distance);
+                let mut d = Dijkstra::new(start);
+
+                for (id, _v) in g_prime.vertex_iter() {
+                    d.initialize_vertex(id.clone());
+                }
+                d.calculate_shortest_paths(&g_prime, start);
+
+                if let Some(new_short_path_info) = d.get_shortest_shortest_path(shortest_distance,adjustment_results.clone()) {
+                    if new_short_path_info.distance < shortest_distance {
+                        info!("Found shorter path from {} dist {}",start,new_short_path_info.distance);
+                        shortest_distance = new_short_path_info.distance;
+                        shortest_path_info = Some(new_short_path_info);
+                    }
+                }
+            }
+
+            /*
+            if ! shortest_path_info.is_none() {
+                let unadjusted = shortest_path_info.unwrap();
+                let mut new_info = unadjusted.clone();
+                new_info.distance = unadjusted.distance - adjustment_results[&unadjusted.source] + adjustment_results[&unadjusted.dest];
+                shortest_path_info = Some(new_info);
+            }
+            */
+            shortest_path_info
+
+        }
+        else {
+            info!("Found Negative Cycle");
+            None
+        }
+
     }
 
 
