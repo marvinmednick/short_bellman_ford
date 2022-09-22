@@ -13,18 +13,29 @@ pub enum VertexOrder {
 
     
 // Format is 1 line per vertex with a tuple consistenting of destination vertex and weight
+// First line is number of vertexes and number of edges
 // e.g.    
+//
 // 1   2,8   3,6
 // 2   1,8  3, 4
 // 3   1,6, 2, 4
-pub fn read_adjacency_multi<F> ( file: & mut File,  mut graph_functions: F)
+pub fn read_adjacency_multi<F> ( file: & mut File,  mut graph_functions: F, skip_first_line: bool)
 where F: GraphBuilder,
 {
 
     //open the file
-    let reader = BufReader::new(file);
+    let mut reader = BufReader::new(file);
 
 	let mut _line_count = 0;
+    if skip_first_line {
+        let mut line_data = String::new();
+        if let Err(error) = reader.read_line(&mut line_data) {
+            error!("Error reading first line {}",error);
+        }
+        trace!("First line skipped {}",line_data);
+        _line_count += 1;	
+    }
+
     for line in reader.lines() {
 		_line_count += 1;	
 		let line_data = line.unwrap();
@@ -36,15 +47,12 @@ where F: GraphBuilder,
         // split the line into the vertex and the list of adjacent vertexes/weight pairs
         //let re_vertex = Regex::new(r"\s*(?P<vertex>\d+)\s+(?P<adjacent_list>.*$)").unwrap();
         let re_vertex = Regex::new(r"^\s*(?P<vertex>\d+)(?P<rest_of_line>.*)$").unwrap();
-        let re_test = Regex::new(r"^\s*(?P<vertex>\d+)(?P<rest_of_line>$)").unwrap();
-        let test1 = re_test.captures(&line_data);
-        trace!("Test is {:?}",test1);
         // adjacent vertexes are in the format vertex,weight   - and regex below allows for
         // whitespace
         if let Some(caps) = re_vertex.captures(&line_data) {
 
             let text1 = caps.get(1).map_or("", |m| m.as_str());
-            trace!("Text1  = {} caps {:#?}",text1,caps);
+            trace!("Text1  = {} caps {:?}",text1,caps);
             let vertex = text1.parse::<usize>().unwrap();
             debug!("Reading connectsion for vertex {}",vertex);
 

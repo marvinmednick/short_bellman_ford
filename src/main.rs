@@ -103,7 +103,7 @@ fn main() {
 	let mut g = DirectedGraph::new();
 
     info!("Starting Reading File");
-    read_adjacency_multi(&mut file, &mut g );
+    read_adjacency_multi(&mut file, &mut g, cmd_line.skip_first);
 
 //    let add_edge_fn = | s,d,w | g.add_edge(s,d,w) ;
 ////    read_adjacency_multi(&mut file, add_edge_fn);

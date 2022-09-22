@@ -28,6 +28,9 @@ pub struct CommandArgs  {
    #[clap(subcommand)]
    pub command: Option<Commands>,
 
+    #[clap(short, long, takes_value=false)]
+    /// Skips the first line of the file (e.g. first line has number of edges, vertexes)
+    pub skip_first: bool,
     
     //pub input_format: InputFileFormat,
 }
