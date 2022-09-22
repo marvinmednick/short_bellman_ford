@@ -9,9 +9,10 @@ use crate::ShortestPathInfo;
 use log::{ info, error, debug /*,warn */,  trace };
 
 // use std::fmt;
-use crate::bellman::{Bellman,MinMax};
+use crate::bellman::Bellman;
+use crate::minmax::MinMax;
 use crate::dijkstra::Dijkstra;
-use crate::bellman::MinMax::{Value};
+use crate::minmax::MinMax::{Value};
 
 #[derive(Debug)]
 pub struct Johnson<'a> {

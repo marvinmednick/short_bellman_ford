@@ -17,12 +17,14 @@ mod dijkstra;
 mod bellman;
 mod johnson;
 mod parse;
+mod minmax;
 
 use crate::cmd_line::CommandArgs;
 use crate::cmd_line::Commands;
 use crate::dirgraph::DirectedGraph;
 use crate::dijkstra::Dijkstra;
-use crate::bellman::{Bellman,MinMax};
+use crate::bellman::Bellman;
+use crate::minmax::MinMax;
 use crate::johnson::Johnson;
 use crate::parse::{read_adjacency_multi };
 use crate::shortpathinfo::ShortestPathInfo;

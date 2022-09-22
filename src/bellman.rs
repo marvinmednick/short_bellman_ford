@@ -8,9 +8,11 @@ use crate::dirgraph::DirectedGraph;
 use log::{ info, error, debug, /*warn,*/ trace };
 
 use std::fmt;
-use crate::bellman::MinMax::{Value,NA};
+use crate::minmax::MinMax;
+use crate::minmax::MinMax::{Value,NA};
 use crate::ShortestPathInfo;
 
+/*
 #[derive(Debug,Clone,Copy,PartialOrd,Ord,PartialEq,Eq)]
 pub enum MinMax<T> {
     Min,
@@ -66,7 +68,7 @@ impl<T: std::ops::Sub + std::cmp::PartialEq + Sub<Output = T>> Sub for MinMax<T>
         }
     }
 }
-
+*/
 
 #[derive(Debug)]
 pub struct Bellman {

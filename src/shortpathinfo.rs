@@ -1,4 +1,4 @@
-use crate::bellman::{MinMax};
+use crate::minmax::{MinMax};
 
 #[derive(Debug,Clone)]
 pub struct ShortestPathInfo {
